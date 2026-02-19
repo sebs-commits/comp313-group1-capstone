@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models;
-[Table("NbaTeam")]
+[Table("nba_teams")]
 public class NbaTeam
 {
+    [Key]
     [Column("team_id")]
     public int TeamId { get; set; }
 

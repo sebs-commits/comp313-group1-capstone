@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models;
 
+[Table("nba_games")]
 public class NbaGame
 {
     [Key]
