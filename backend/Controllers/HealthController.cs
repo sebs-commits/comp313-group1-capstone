@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 
+// To use healthcheck go to: http://localhost:5050/swagger/index.html then execute Health GET
+// Or use postman or any api and run a GET request to http://localhost:<port>/api/health
+// Default port should be 5050, just check console or backend.http
+
 [ApiController]
 [Route("api/[controller]")]
 public class HealthController :ControllerBase
