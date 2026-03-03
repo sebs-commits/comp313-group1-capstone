@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<NbaGame>()
+            .HasKey(g => g.GameId);
         
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)

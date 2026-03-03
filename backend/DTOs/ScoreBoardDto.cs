@@ -14,27 +14,27 @@ public class ScoreboardData
 {
     public string GameDate { get; set; } = string.Empty;
     public string LeagueId { get; set; } = string.Empty;
-    public List<NbaGame> Games { get; set; } = new();
+    public List<LiveGame> Games { get; set; } = new();
 }
 
-public class NbaGame
+public class LiveGame
 {
     public string GameId { get; set; } = string.Empty;
-
+    
     // Changed to string because the API sends values like "20240301/LALDEN"
     public string GameCode { get; set; } = string.Empty;
-
+    
     public int GameStatus { get; set; }
     public string GameStatusText { get; set; } = string.Empty;
 
     [JsonPropertyName("period")]
     public int Period { get; set; } // The API often sends period as a single int
 
-    public TeamData HomeTeam { get; set; } = new();
-    public TeamData AwayTeam { get; set; } = new();
+    public LiveTeamData HomeTeam { get; set; } = new();
+    public LiveTeamData AwayTeam { get; set; } = new();
 }
 
-public class TeamData
+public class LiveTeamData
 {
     public int TeamId { get; set; }
     public string TeamName { get; set; } = string.Empty;
