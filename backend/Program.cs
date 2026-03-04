@@ -1,6 +1,9 @@
 
+using System.Text;
 using backend.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace backend;
 
@@ -12,6 +15,21 @@ public class Program
         // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1",
+                    ValidateAudience = true,
+                    ValidAudience = "authenticated",
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Supabase:JwtSecret"]!))
+                };
+            });
 
         // Add services to the container.
         builder.Services.AddControllers();
@@ -40,6 +58,8 @@ public class Program
 
         app.UseHttpsRedirection();
         app.UseAuthorization();
+        app.UseAuthentication();
+        app.UseAuthorization(); 
         app.MapControllers();
         app.Run();
     }
