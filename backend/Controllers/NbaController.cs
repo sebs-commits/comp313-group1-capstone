@@ -1,21 +1,36 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using backend;
+using Microsoft.EntityFrameworkCore;
+using backend.Data;     
+using backend.Models;   
 
-[ApiController]
-[Route("api/[controller]")]
-public class NbaController : ControllerBase
+
+namespace backend.Controllers
 {
-    private readonly ILivePlayerDataService _nbaService;
-
-    public NbaController(ILivePlayerDataService nbaService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class NbaController : ControllerBase
     {
-        _nbaService = nbaService;
-    }
+        private readonly ILivePlayerDataService _nbaService;
+        private readonly AppDbContext _context;
 
-    [HttpGet("scoreboard")]
-    public async Task<IActionResult> GetScoreboard()
-    {
-        var data = await _nbaService.GetTodaysScoreboardAsync();
-        return data != null ? Ok(data) : NotFound("No games found.");
+        public NbaController(ILivePlayerDataService nbaService, AppDbContext context)
+        {
+            _nbaService = nbaService;
+            _context = context;
+        }
+
+        [HttpGet("scoreboard")]
+        public async Task<IActionResult> GetScoreboard()
+        {
+            var data = await _nbaService.GetTodaysScoreboardAsync();
+            return data != null ? Ok(data) : NotFound("No games found.");
+        }
+
+        [HttpGet("leagues")]
+        public async Task<ActionResult<IEnumerable<NbaLeague>>> GetLeagues()
+        {
+            var leagues = await _context.Leagues.ToListAsync();
+            return Ok(leagues);
+        }
     }
 }

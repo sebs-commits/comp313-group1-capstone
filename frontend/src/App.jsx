@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import LivePlayerData from './pages/LivePlayerData';
+import UserLeagues from './pages/UserLeagues';
 
 function LoginPage() {
     return (
@@ -17,6 +18,7 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/livePlayerData" element={<LivePlayerData />} />
+                <Route path="/userLeagues" element={<UserLeagues />} />
             </Routes>
         </Router>
     );
