@@ -1,6 +1,12 @@
 
+using System.Text;
 using backend.Data;
+using backend.Repositories;
+using backend.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace backend;
 
@@ -12,11 +18,51 @@ public class Program
         // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1";
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1",
+                    ValidateAudience = true,
+                    ValidAudience = "authenticated",
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
+                };
+                options.MetadataAddress = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1/.well-known/openid-configuration";
+            });
 
         // Add services to the container.
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header
+            });
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+        builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
 
@@ -39,7 +85,10 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
+        
+        app.UseAuthorization(); 
         app.MapControllers();
         app.Run();
     }

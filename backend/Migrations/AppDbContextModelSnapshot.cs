@@ -269,67 +269,40 @@ namespace backend.Migrations
                     b.ToTable("nba_teams");
                 });
 
-            modelBuilder.Entity("backend.NbaGame", b =>
+            modelBuilder.Entity("backend.Models.Profile", b =>
                 {
-                    b.Property<string>("GameId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("AwayTeamTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("GameCode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("GameStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("GameStatusText")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("HomeTeamTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Period")
-                        .HasColumnType("integer")
-                        .HasAnnotation("Relational:JsonPropertyName", "period");
-
-                    b.HasKey("GameId");
-
-                    b.HasIndex("AwayTeamTeamId");
-
-                    b.HasIndex("HomeTeamTeamId");
-
-                    b.ToTable("NbaGames");
-                });
-
-            modelBuilder.Entity("backend.TeamData", b =>
-                {
-                    b.Property<int>("TeamId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TeamId"));
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
-                    b.Property<int>("Score")
-                        .HasColumnType("integer");
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text")
+                        .HasColumnName("first_name");
 
-                    b.Property<string>("TeamCity")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
 
-                    b.Property<string>("TeamName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login");
 
-                    b.Property<string>("TeamTricode")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<string>("LastName")
+                        .HasColumnType("text")
+                        .HasColumnName("last_name");
 
-                    b.HasKey("TeamId");
+                    b.Property<string>("Username")
+                        .HasColumnType("text")
+                        .HasColumnName("username");
 
-                    b.ToTable("TeamData");
+                    b.HasKey("Id");
+
+                    b.ToTable("profiles");
                 });
 
             modelBuilder.Entity("backend.Models.NbaGame", b =>
@@ -379,25 +352,6 @@ namespace backend.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("backend.NbaGame", b =>
-                {
-                    b.HasOne("backend.TeamData", "AwayTeam")
-                        .WithMany()
-                        .HasForeignKey("AwayTeamTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.TeamData", "HomeTeam")
-                        .WithMany()
-                        .HasForeignKey("HomeTeamTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AwayTeam");
-
-                    b.Navigation("HomeTeam");
                 });
 #pragma warning restore 612, 618
         }

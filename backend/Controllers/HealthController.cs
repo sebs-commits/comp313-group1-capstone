@@ -1,4 +1,5 @@
 using backend.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,5 +39,13 @@ public class HealthController :ControllerBase
             return StatusCode(503, new { status = "unhealthy", database = ex.Message });
         }
         
+    }
+    
+    [HttpGet("auth")]
+    [Authorize]
+    public IActionResult AuthCheck()
+    {
+        var userId = User.FindFirst("sub")?.Value;
+        return Ok(new { status = "authenticated", userId });
     }
 }
