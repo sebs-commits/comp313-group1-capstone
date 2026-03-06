@@ -84,4 +84,39 @@ public class ProfileController : ControllerBase
             IsActive = profile.IsActive
         });
     }
+    [HttpPut]
+    public async Task<IActionResult> UpdateProfile(ProfileDto request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(new { message = "Invalid token" });
+
+        var profile = await _profileRepository.GetByIdAsync(userId.Value);
+
+        if (profile == null)
+            return NotFound(new { message = "Profile not found" });
+
+        if (request.Username != profile.Username)
+        {
+            var usernameExists = await _profileRepository.GetByUsernameAsync(request.Username);
+            if (usernameExists != null)
+                return Conflict(new { message = "Username already taken" });
+        }
+
+        profile.Username = request.Username;
+        profile.FirstName = request.FirstName;
+        profile.LastName = request.LastName;
+
+        await _profileRepository.UpdateAsync(profile);
+
+        return Ok(new ProfileDto
+        {
+            Id = profile.Id,
+            Username = profile.Username,
+            FirstName = profile.FirstName,
+            LastName = profile.LastName,
+            CreatedAt = profile.CreatedAt,
+            IsActive = profile.IsActive
+        });
+    }
 }

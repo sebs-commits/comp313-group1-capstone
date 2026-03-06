@@ -32,4 +32,10 @@ public class ProfileRepository : IProfileRepository
         return profile;
     }
     // TODO: UPDATE Profile
+    public async Task<Profile> UpdateAsync(Profile profile)
+    {
+        _dbContext.Profiles.Update(profile);
+        await _dbContext.SaveChangesAsync();
+        return profile;
+    }
 }
