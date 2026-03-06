@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260305010520_FixModelPrimaryKeys")]
+    partial class FixModelPrimaryKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -269,40 +272,67 @@ namespace backend.Migrations
                     b.ToTable("nba_teams");
                 });
 
-            modelBuilder.Entity("backend.Models.Profile", b =>
+            modelBuilder.Entity("backend.NbaGame", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("GameId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AwayTeamTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GameCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("GameStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GameStatusText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("HomeTeamTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Period")
+                        .HasColumnType("integer")
+                        .HasAnnotation("Relational:JsonPropertyName", "period");
+
+                    b.HasKey("GameId");
+
+                    b.HasIndex("AwayTeamTeamId");
+
+                    b.HasIndex("HomeTeamTeamId");
+
+                    b.ToTable("NbaGames");
+                });
+
+            modelBuilder.Entity("backend.TeamData", b =>
+                {
+                    b.Property<int>("TeamId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TeamId"));
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("text")
-                        .HasColumnName("first_name");
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                    b.Property<string>("TeamCity")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<DateTime?>("LastLogin")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_login");
+                    b.Property<string>("TeamName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("LastName")
-                        .HasColumnType("text")
-                        .HasColumnName("last_name");
+                    b.Property<string>("TeamTricode")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("Username")
-                        .HasColumnType("text")
-                        .HasColumnName("username");
+                    b.HasKey("TeamId");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("profiles");
+                    b.ToTable("TeamData");
                 });
 
             modelBuilder.Entity("backend.Models.NbaGame", b =>
@@ -352,6 +382,25 @@ namespace backend.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("backend.NbaGame", b =>
+                {
+                    b.HasOne("backend.TeamData", "AwayTeam")
+                        .WithMany()
+                        .HasForeignKey("AwayTeamTeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.TeamData", "HomeTeam")
+                        .WithMany()
+                        .HasForeignKey("HomeTeamTeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AwayTeam");
+
+                    b.Navigation("HomeTeam");
                 });
 #pragma warning restore 612, 618
         }
