@@ -9,6 +9,24 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    const handleDemoLogin = async () => {
+        setError('');
+        setLoading(true);
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email: import.meta.env.VITE_DEMO_EMAIL,
+            password: import.meta.env.VITE_DEMO_PASSWORD,
+        });
+
+        if (error) {
+            setError(error.message);
+            setLoading(false);
+            return;
+        }
+
+        navigate('/userLeagues');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -52,6 +70,9 @@ export default function LoginPage() {
                 {error && <p>{error}</p>}
                 <button type="submit" disabled={loading}>
                     {loading ? 'Logging in...' : 'Login'}
+                </button>
+                <button type="button" onClick={handleDemoLogin} disabled={loading}>
+                    Demo
                 </button>
             </form>
         </div>
