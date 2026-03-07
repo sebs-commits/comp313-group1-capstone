@@ -2,37 +2,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleDemoLogin = async () => {
-        setError('');
-        setLoading(true);
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email: import.meta.env.VITE_DEMO_EMAIL,
-            password: import.meta.env.VITE_DEMO_PASSWORD,
-        });
-
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-            return;
-        }
-
-        navigate('/userLeagues');
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
             setError(error.message);
@@ -45,7 +27,7 @@ export default function LoginPage() {
 
     return (
         <div>
-            <h1>Welcome</h1>
+            <h1>Register</h1>
             <form onSubmit={handleSubmit}>
                 <div>
                     <label htmlFor="email">Email</label>
@@ -69,13 +51,10 @@ export default function LoginPage() {
                 </div>
                 {error && <p>{error}</p>}
                 <button type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
-                <button type="button" onClick={handleDemoLogin} disabled={loading}>
-                    Demo
+                    {loading ? 'Registering...' : 'Register'}
                 </button>
             </form>
-            <p>Don't have an account? <a href="/register">Register</a></p>
+            <p>Already have an account? <a href="/">Login</a></p>
         </div>
     );
 }
