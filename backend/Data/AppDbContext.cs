@@ -26,9 +26,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<NbaGame>()
             .HasKey(g => g.GameId);
 
-        modelBuilder.Entity<TeamData>()
-            .HasKey(t => t.TeamId);
-
         modelBuilder.Entity<NbaLeague>()
             .HasKey(l => l.Id);
 
