@@ -1,5 +1,4 @@
 
-using System.Text;
 using backend.Data;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
@@ -18,10 +17,12 @@ public class Program
         // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
                 options.Authority = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1";
+                options.MetadataAddress = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1/.well-known/openid-configuration";
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -31,7 +32,6 @@ public class Program
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true
                 };
-                options.MetadataAddress = "https://kudpkhmycnsdvziepcbb.supabase.co/auth/v1/.well-known/openid-configuration";
             });
 
         // Add services to the container.
@@ -87,8 +87,6 @@ public class Program
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
-        
-        app.UseAuthorization(); 
         app.MapControllers();
         app.Run();
     }
