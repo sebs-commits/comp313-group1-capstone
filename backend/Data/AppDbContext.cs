@@ -14,10 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<NbaPlayer> NbaPlayers { get; set; }
     public DbSet<NbaPlayerGameStats> NbaPlayerGameStats { get; set; }
     public DbSet<NbaLeague> Leagues { get; set; }
+    public DbSet<LeagueMember> LeagueMembers { get; set; }
     public DbSet<Profile> Profiles { get; set; }
-
-    // TODO: Create models for other tables (users, transactions,
-    // TODO: transaction_details, leagues, fantasy_teams, fantasy_rosters, draft_picks, fantasy_scores)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,10 +24,30 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<NbaGame>()
             .HasKey(g => g.GameId);
 
-        modelBuilder.Entity<NbaLeague>()
-            .HasKey(l => l.Id);
-
         modelBuilder.Entity<NbaTeam>()
             .HasKey(t => t.TeamId);
+
+        modelBuilder.Entity<NbaLeague>(b =>
+        {
+            b.HasKey(l => l.Id);
+            b.HasOne(l => l.CreatedBy)
+             .WithMany()
+             .HasForeignKey(l => l.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LeagueMember>(b =>
+        {
+            b.HasKey(lm => lm.Id);
+            b.HasIndex(lm => new { lm.LeagueId, lm.UserId }).IsUnique();
+            b.HasOne(lm => lm.League)
+             .WithMany(l => l.Members)
+             .HasForeignKey(lm => lm.LeagueId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(lm => lm.User)
+             .WithMany()
+             .HasForeignKey(lm => lm.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

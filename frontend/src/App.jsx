@@ -4,6 +4,7 @@ import UserLeagues from './pages/UserLeagues';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
+import CreateLeague from './pages/CreateLeague';
 
 
 export default function App() {
@@ -15,8 +16,10 @@ export default function App() {
                 <Route path="/livePlayerData" element={<LivePlayerData />} />
                 <Route path="/userLeagues" element={<UserLeagues />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/create-league" element={<CreateLeague />} />
             </Routes>
         </Router>
     );
 }
+
 
