@@ -120,9 +120,6 @@ const CreateLeague = () => {
         </div>
 
         <div className="form-card">
-          <div className="form-card__icon-wrap" style={{ background: 'rgba(232,129,58,0.12)', color: 'var(--accent)' }}>
-            <PlusCircle size={28} strokeWidth={1.6} />
-          </div>
           <h2 className="form-card__title">League Settings</h2>
           <p className="form-card__desc">
             Choose your league name and settings to get started.
