@@ -71,7 +71,7 @@ export default function LoginPage() {
                 <button type="submit" disabled={loading}>
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
-                <button type="button" onClick={handleDemoLogin} disabled={loading}>
+                <button class="btn" type="button" onClick={handleDemoLogin} disabled={loading}>
                     Demo
                 </button>
             </form>
