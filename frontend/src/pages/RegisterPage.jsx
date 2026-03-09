@@ -60,7 +60,7 @@ export default function RegisterPage() {
             return;
         }
 
-        navigate('/userLeagues');
+        navigate('/dashboard');
     };
 
     return (
