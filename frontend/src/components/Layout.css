@@ -4,6 +4,63 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
+
+  /* Backgrounds */
+  --bg-primary: #0e1117;
+  --bg-secondary: #161b27;
+  --bg-card: #1c2333;
+  --bg-card-hover: #21293d;
+
+  /* Accent Colors */
+  --accent: #e8813a;
+  --accent-blue: #1d428a;
+  --accent-green: #3fb950;
+  --accent-red: #f85149;
+  --accent-gold: #f0c040;
+  --accent-teal: #58a6ff;
+
+  /* Text */
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+
+  /* Layout */
+  --border: rgba(48, 54, 61, 0.9);
+  --sidebar-width: 252px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  --transition: all 0.18s ease;
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.layout *, .layout *::before, .layout *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.layout a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.layout h1, .layout h2, .layout h3, .layout h4, .layout h5, .layout h6 {
+  line-height: 1.3;
+}
+
+.layout button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.layout input, .layout select, .layout textarea {
+  font-family: inherit;
 }
 
 /* ── Sidebar ── */

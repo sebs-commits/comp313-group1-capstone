@@ -64,7 +64,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen w-full flex items-center justify-center">
             <div className="card bg-base-100 shadow-xl w-full max-w-sm">
                 <div className="card-body">
                     <h1 className="card-title text-2xl justify-center mb-2">Register</h1>
