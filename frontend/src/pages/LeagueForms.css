@@ -131,7 +131,7 @@
 }
 
 /* Primary button */
-.btn-primary {
+.league-btn-primary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,13 +147,13 @@
   letter-spacing: -0.1px;
 }
 
-.btn-primary:hover:not(:disabled) {
+.league-btn-primary:hover:not(:disabled) {
   background: #d4712e;
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(232, 129, 58, 0.35);
 }
 
-.btn-primary:disabled {
+.league-btn-primary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

@@ -90,7 +90,7 @@ const CreateLeague = () => {
 
             <div className="success-actions">
               <button
-                className="btn-primary"
+                className="league-btn-primary"
                 onClick={() => navigate(`/leagues/${created.id}`)}
               >
                 Go to League <ArrowRight size={16} />
@@ -192,7 +192,7 @@ const CreateLeague = () => {
 
             <button
               type="submit"
-              className="btn-primary"
+              className="league-btn-primary"
               disabled={!form.name.trim() || loading}
             >
               {loading ? 'Creating…' : <><span>Create League</span> <ArrowRight size={16} /></>}
