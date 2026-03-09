@@ -44,38 +44,58 @@ export default function LoginPage() {
     };
 
     return (
-        <div>
-            <h1>Welcome</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">Email</label>
-                    <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="card bg-base-100 shadow-xl w-full max-w-sm">
+                <div className="card-body">
+                    <h1 className="card-title text-2xl justify-center mb-2">Welcome</h1>
+
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        <fieldset className="fieldset">
+                            <legend className="fieldset-legend">Email</legend>
+                            <input
+                                id="email"
+                                type="email"
+                                className="input w-full"
+                                placeholder="name@nba.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </fieldset>
+
+                        <fieldset className="fieldset">
+                            <legend className="fieldset-legend">Password</legend>
+                            <input
+                                id="password"
+                                type="password"
+                                className="input w-full"
+                                placeholder="********"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </fieldset>
+
+                        {error && (
+                            <div role="alert" className="alert alert-error">
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                            {loading ? <span className="loading loading-spinner loading-sm" /> : 'Login'}
+                        </button>
+
+                        <button type="button" className="btn btn-ghost" onClick={handleDemoLogin} disabled={loading}>
+                            Demo
+                        </button>
+                    </form>
+
+                    <p className="text-center text-sm mt-2">
+                        Don't have an account? <a className="link link-primary" href="/register">Register</a>
+                    </p>
                 </div>
-                <div>
-                    <label htmlFor="password">Password</label>
-                    <input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                {error && <p>{error}</p>}
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
-                <button type="button" onClick={handleDemoLogin} disabled={loading}>
-                    Demo
-                </button>
-            </form>
-            <p>Don't have an account? <a href="/register">Register</a></p>
+            </div>
         </div>
     );
 }
