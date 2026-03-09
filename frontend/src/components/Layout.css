@@ -1,0 +1,246 @@
+/* ── Layout Shell ── */
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+/* Brand */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-ball {
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(232, 129, 58, 0.5));
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  line-height: 1.4;
+}
+
+/* Nav */
+.sidebar-nav {
+  flex: 1;
+  padding: 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  padding: 0 10px 10px;
+  display: block;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: var(--transition);
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.nav-link--active {
+  background: rgba(232, 129, 58, 0.13);
+  color: var(--accent);
+}
+
+.nav-link--active:hover {
+  background: rgba(232, 129, 58, 0.18);
+  color: var(--accent);
+}
+
+.nav-chevron {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+/* Footer */
+.sidebar-footer {
+  padding: 14px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sidebar-user:hover {
+  background: var(--bg-card);
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--accent) 0%, #c8102e 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dot {
+  font-size: 11px;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.logout-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.sidebar-user:hover .logout-icon {
+  color: var(--accent-red);
+}
+
+/* ── Main Content ── */
+.main-wrapper {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  background: var(--bg-primary);
+}
+
+.main-content {
+  padding: 36px 40px;
+  max-width: 1300px;
+}
+
+/* ── Shared Page Styles ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.4px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  transition: var(--transition);
+  opacity: 0.85;
+}
+
+.section-link:hover {
+  opacity: 1;
+}
+
+.dashboard-section {
+  margin-bottom: 32px;
+}
