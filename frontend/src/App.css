@@ -1,3 +1,4 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* App-level styles — component styles are co-located with their files */

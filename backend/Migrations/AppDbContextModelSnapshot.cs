@@ -22,6 +22,37 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("backend.Models.LeagueMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LeagueId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("LeagueId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("LeagueMembers");
+                });
+
             modelBuilder.Entity("backend.Models.NbaGame", b =>
                 {
                     b.Property<string>("GameId")
@@ -73,15 +104,26 @@ namespace backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("InviteCode")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.ToTable("Leagues");
                 });
@@ -305,6 +347,25 @@ namespace backend.Migrations
                     b.ToTable("profiles");
                 });
 
+            modelBuilder.Entity("backend.Models.LeagueMember", b =>
+                {
+                    b.HasOne("backend.Models.NbaLeague", "League")
+                        .WithMany("Members")
+                        .HasForeignKey("LeagueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Profile", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("League");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("backend.Models.NbaGame", b =>
                 {
                     b.HasOne("backend.Models.NbaTeam", "AwayTeam")
@@ -318,6 +379,17 @@ namespace backend.Migrations
                     b.Navigation("AwayTeam");
 
                     b.Navigation("HomeTeam");
+                });
+
+            modelBuilder.Entity("backend.Models.NbaLeague", b =>
+                {
+                    b.HasOne("backend.Models.Profile", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
                 });
 
             modelBuilder.Entity("backend.Models.NbaPlayer", b =>
@@ -352,6 +424,11 @@ namespace backend.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("backend.Models.NbaLeague", b =>
+                {
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }

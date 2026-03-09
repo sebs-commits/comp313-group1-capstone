@@ -24,7 +24,7 @@ export default function LoginPage() {
             return;
         }
 
-        navigate('/userLeagues');
+        navigate('/dashboard');
     };
 
     const handleSubmit = async (e) => {
@@ -40,7 +40,7 @@ export default function LoginPage() {
             return;
         }
 
-        navigate('/userLeagues');
+        navigate('/dashboard');
     };
 
     return (
