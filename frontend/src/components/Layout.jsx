@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Activity,
@@ -9,6 +9,7 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard',     icon: LayoutDashboard },
@@ -20,6 +21,12 @@ const navItems = [
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -59,14 +66,23 @@ const Layout = ({ children }) => {
 
         {/* Footer / User */}
         <div className="border-t border-[var(--border)] px-[10px] py-[18px]">
-          <div className="flex min-h-[52px] cursor-pointer items-center gap-[10px] rounded-[var(--radius)] px-[10px] py-[11px] transition-[var(--transition)] hover:bg-[var(--bg-card)]">
-            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent)] to-[#c8102e] text-white">
-              <User size={15} />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-h-[52px] items-center gap-[10px] rounded-[var(--radius)] px-[10px] py-[11px]">
+            <Link
+              to="/profile"
+              className="flex flex-1 items-center gap-[10px] rounded-[var(--radius)] transition-[var(--transition)] hover:bg-[var(--bg-card)] px-[6px] py-[6px]"
+            >
+              <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent)] to-[#c8102e] text-white">
+                <User size={15} />
+              </div>
               <span className="truncate text-[13px] font-semibold text-[var(--text-primary)]">My Account</span>
-            </div>
-            <LogOut size={15} className="shrink-0 text-[var(--text-muted)] transition-[var(--transition)] hover:text-[var(--accent-red)]" />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="shrink-0 rounded-[var(--radius)] p-2 text-[var(--text-muted)] transition-[var(--transition)] hover:bg-[var(--bg-card)] hover:text-red-400"
+              title="Log out"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
         </div>
       </aside>
