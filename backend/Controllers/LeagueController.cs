@@ -32,7 +32,14 @@ public class LeagueController : ControllerBase
                 Description = l.Description,
                 IsPublic = l.IsPublic,
                 CreatedByUserId = l.CreatedByUserId,
-                MemberCount = l.Members.Count
+                MemberCount = l.Members.Count,
+                WeekStartDate = l.WeekStartDate,
+                WeekEndDate = l.WeekEndDate,
+                DraftDate = l.DraftDate,
+                ScoringType = l.ScoringType,
+                MaxTeams = l.MaxTeams,
+                RosterSize = l.RosterSize,
+                Status = l.Status
             })
             .ToListAsync();
 
@@ -53,7 +60,14 @@ public class LeagueController : ControllerBase
                 IsPublic = l.IsPublic,
                 InviteCode = l.InviteCode,
                 CreatedByUserId = l.CreatedByUserId,
-                MemberCount = l.Members.Count
+                MemberCount = l.Members.Count,
+                WeekStartDate = l.WeekStartDate,
+                WeekEndDate = l.WeekEndDate,
+                DraftDate = l.DraftDate,
+                ScoringType = l.ScoringType,
+                MaxTeams = l.MaxTeams,
+                RosterSize = l.RosterSize,
+                Status = l.Status
             })
             .FirstOrDefaultAsync();
 
@@ -74,7 +88,12 @@ public class LeagueController : ControllerBase
             Description = dto.Description,
             IsPublic = dto.IsPublic,
             CreatedByUserId = dto.CreatedByUserId,
-            InviteCode = dto.IsPublic ? null : Guid.NewGuid().ToString("N")[..8].ToUpper()
+            InviteCode = dto.IsPublic ? null : Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            DraftDate = dto.DraftDate,
+            ScoringType = dto.ScoringType,
+            MaxTeams = dto.MaxTeams,
+            RosterSize = dto.RosterSize,
+            Status = "pending"
         };
 
         _context.Leagues.Add(league);
@@ -97,7 +116,12 @@ public class LeagueController : ControllerBase
             IsPublic = league.IsPublic,
             InviteCode = league.InviteCode,
             CreatedByUserId = league.CreatedByUserId,
-            MemberCount = 1
+            MemberCount = 1,
+            DraftDate = league.DraftDate,
+            ScoringType = league.ScoringType,
+            MaxTeams = league.MaxTeams,
+            RosterSize = league.RosterSize,
+            Status = league.Status
         };
 
         return CreatedAtAction(nameof(GetLeague), new { id = league.Id }, response);
