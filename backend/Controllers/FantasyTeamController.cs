@@ -92,4 +92,62 @@ public class FantasyTeamController : ControllerBase
             Roster = roster
         });
     }
+
+    // POST api/fantasy-team/{id}/roster
+    [HttpPost("{id:int}/roster")]
+    public async Task<IActionResult> AddPlayer(int id, AddRosterPlayerDto dto)
+    {
+        var team = await _context.FantasyTeams
+            .Include(ft => ft.Roster)
+            .Include(ft => ft.League)
+            .FirstOrDefaultAsync(ft => ft.Id == id);
+
+        if (team is null)
+            return NotFound("Team not found.");
+
+        if (team.Roster.Count >= team.League!.RosterSize)
+            return BadRequest($"Roster is full. Maximum size is {team.League.RosterSize}.");
+
+        if (team.Roster.Any(fr => fr.PlayerId == dto.PlayerId))
+            return Conflict("Player is already on your roster");
+
+        if (team.League.UniqueRosters)
+        {
+            var takenByOther = await _context.FantasyRosters
+                .AnyAsync(fr => fr.PlayerId == dto.PlayerId
+                    && fr.FantasyTeam!.LeagueId == team.LeagueId
+                    && fr.FantasyTeamId != team.Id);
+
+            if (takenByOther)
+                return Conflict("This player has already been drafted by another team in this league.");
+        }
+
+        var player = await _context.NbaPlayers.FindAsync(dto.PlayerId);
+        if (player is null)
+            return NotFound("Player not found.");
+
+        _context.FantasyRosters.Add(new FantasyRoster
+        {
+            FantasyTeamId = id,
+            PlayerId = dto.PlayerId
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = $"{player.FullName} added to roster." });
+    }
+
+    // DELETE api/fantasy-team/{id}/roster/{playerId}
+    [HttpDelete("{id:int}/roster/{playerId:int}")]
+    public async Task<IActionResult> RemovePlayer(int id, int playerId)
+    {
+        var entry = await _context.FantasyRosters
+            .FirstOrDefaultAsync(fr => fr.FantasyTeamId == id && fr.PlayerId == playerId);
+
+        if (entry is null)
+            return NotFound("Player not found on this roster.");
+
+        _context.FantasyRosters.Remove(entry);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Player removed from roster." });
+    }
 }
