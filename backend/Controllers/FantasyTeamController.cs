@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
+using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,12 @@ namespace backend.Controllers;
 public class FantasyTeamController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly FantasyScoringService _scoring;
 
-    public FantasyTeamController(AppDbContext context)
+    public FantasyTeamController(AppDbContext context, FantasyScoringService scoring)
     {
         _context = context;
+        _scoring = scoring;
     }
 
     // POST api/fantasy-team
@@ -23,21 +26,29 @@ public class FantasyTeamController : ControllerBase
     {
         var league = await _context.Leagues.FindAsync(dto.LeagueId);
         if (league is null)
+        {
             return NotFound("League not found.");
+        }
 
         var isMember = await _context.LeagueMembers
             .AnyAsync(lm => lm.LeagueId == dto.LeagueId && lm.UserId == dto.UserId);
         if (!isMember)
+        {
             return BadRequest("User is not a member of this league.");
+        }
 
         var alreadyHasTeam = await _context.FantasyTeams
             .AnyAsync(ft => ft.LeagueId == dto.LeagueId && ft.UserId == dto.UserId);
         if (alreadyHasTeam)
+        {
             return Conflict("User already has a team in this league.");
+        }
 
         var teamCount = await _context.FantasyTeams.CountAsync(ft => ft.LeagueId == dto.LeagueId);
         if (teamCount >= league.MaxTeams)
+        {
             return BadRequest("This league has reached its maximum number of teams.");
+        }
 
         var team = new FantasyTeam
         {
@@ -71,7 +82,9 @@ public class FantasyTeamController : ControllerBase
             .FirstOrDefaultAsync(ft => ft.Id == id);
 
         if (team is null)
+        {
             return NotFound();
+        }
 
         var roster = team.Roster.Select(fr => new RosterPlayerDto
         {
@@ -103,13 +116,19 @@ public class FantasyTeamController : ControllerBase
             .FirstOrDefaultAsync(ft => ft.Id == id);
 
         if (team is null)
+        {
             return NotFound("Team not found.");
+        }
 
         if (team.Roster.Count >= team.League!.RosterSize)
+        {
             return BadRequest($"Roster is full. Maximum size is {team.League.RosterSize}.");
+        }
 
         if (team.Roster.Any(fr => fr.PlayerId == dto.PlayerId))
-            return Conflict("Player is already on your roster");
+        {
+            return Conflict("Player is already on your roster.");
+        }
 
         if (team.League.UniqueRosters)
         {
@@ -119,12 +138,16 @@ public class FantasyTeamController : ControllerBase
                     && fr.FantasyTeamId != team.Id);
 
             if (takenByOther)
+            {
                 return Conflict("This player has already been drafted by another team in this league.");
+            }
         }
 
         var player = await _context.NbaPlayers.FindAsync(dto.PlayerId);
         if (player is null)
+        {
             return NotFound("Player not found.");
+        }
 
         _context.FantasyRosters.Add(new FantasyRoster
         {
@@ -144,7 +167,9 @@ public class FantasyTeamController : ControllerBase
             .FirstOrDefaultAsync(fr => fr.FantasyTeamId == id && fr.PlayerId == playerId);
 
         if (entry is null)
+        {
             return NotFound("Player not found on this roster.");
+        }
 
         _context.FantasyRosters.Remove(entry);
         await _context.SaveChangesAsync();
@@ -165,67 +190,49 @@ public class FantasyTeamController : ControllerBase
             return NotFound("Team not found.");
         }
 
-        // If the league has no scoring window well return 0
-        if (team.League!.WeekStartDate is null || team.League.WeekEndDate is null)
+        var score = await _scoring.GetTeamScore(team, team.League!);
+        return Ok(score);
+    }
+
+    // GET api/fantasy-team/league/{leagueId}/leaderboard
+    [HttpGet("league/{leagueId:int}/leaderboard")]
+    public async Task<ActionResult<List<LeaderboardEntryDto>>> GetLeaderboard(int leagueId)
+    {
+        var league = await _context.Leagues.FindAsync(leagueId);
+        if (league is null)
         {
-            return Ok(new FantasyTeamScoreDto { FantasyTeamId = team.Id, TeamName = team.TeamName });
+            return NotFound("League not found.");
         }
-            
 
-        var playerScores = new List<PlayerScoreDto>();
-        
-        foreach (var rosterEntry in team.Roster)
+        var teams = await _context.FantasyTeams
+            .Include(ft => ft.Roster)
+            .Where(ft => ft.LeagueId == leagueId)
+            .ToListAsync();
+
+        // Score each team and build the leaderboard entries
+        var leaderboard = new List<LeaderboardEntryDto>();
+
+        foreach (var team in teams)
         {
-            // Get all game stats for this player within the scoring window
-            var stats = await _context.NbaPlayerGameStats
-                .Include(s => s.Player)
-                .Include(s => s.Game)
-                .Where(s => s.PlayerId == rosterEntry.PlayerId
-                    && s.Game!.GameDate >= team.League.WeekStartDate
-                    && s.Game.GameDate <= team.League.WeekEndDate)
-                .ToListAsync();
+            var totalPoints = await _scoring.GetTeamTotalPoints(team, league);
 
-            if (stats.Count == 0) continue;
-
-            // Add al the stats from all games
-            int points     = stats.Sum(s => s.Points ?? 0);
-            int rebounds   = stats.Sum(s => s.Rebounds ?? 0);
-            int assists    = stats.Sum(s => s.Assists ?? 0);
-            int steals     = stats.Sum(s => s.Steals ?? 0);
-            int blocks     = stats.Sum(s => s.Blocks ?? 0);
-            int turnovers  = stats.Sum(s => s.Turnovers ?? 0);
-            int threesMade = stats.Sum(s => s.Fg3Made ?? 0);
-
-            // Apply the scores
-            decimal fantasyPoints = (points     * 1.0m)
-                                  + (rebounds   * 1.2m)
-                                  + (assists    * 1.5m)
-                                  + (steals     * 3.0m)
-                                  + (blocks     * 3.0m)
-                                  + (turnovers  * -1.0m)
-                                  + (threesMade * 0.5m);
-
-            playerScores.Add(new PlayerScoreDto
+            leaderboard.Add(new LeaderboardEntryDto
             {
-                PlayerId = rosterEntry.PlayerId,
-                PlayerName = stats.First().Player?.FullName,
-                FantasyPoints = fantasyPoints,
-                Points = points,
-                Rebounds = rebounds,
-                Assists = assists,
-                Steals = steals,
-                Blocks = blocks,
-                Turnovers = turnovers,
-                Fg3Made = threesMade
+                FantasyTeamId = team.Id,
+                TeamName      = team.TeamName,
+                UserId        = team.UserId,
+                TotalPoints   = totalPoints
             });
         }
 
-        return Ok(new FantasyTeamScoreDto
+        // Sort by points descending and assign ranks
+        leaderboard = leaderboard.OrderByDescending(t => t.TotalPoints).ToList();
+
+        for (int i = 0; i < leaderboard.Count; i++)
         {
-            FantasyTeamId = team.Id,
-            TeamName = team.TeamName,
-            TotalPoints = playerScores.Sum(p => p.FantasyPoints),
-            PlayerScores = playerScores
-        });
+            leaderboard[i].Rank = i + 1;
+        }
+
+        return Ok(leaderboard);
     }
 }
