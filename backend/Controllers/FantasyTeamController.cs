@@ -148,6 +148,84 @@ public class FantasyTeamController : ControllerBase
 
         _context.FantasyRosters.Remove(entry);
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Player removed from roster." });
+        return Ok(new { message = "Player removed from the roster." });
+    }
+
+    // GET api/fantasy-team/{id}/score
+    [HttpGet("{id:int}/score")]
+    public async Task<ActionResult<FantasyTeamScoreDto>> GetScore(int id)
+    {
+        var team = await _context.FantasyTeams
+            .Include(ft => ft.Roster)
+            .Include(ft => ft.League)
+            .FirstOrDefaultAsync(ft => ft.Id == id);
+
+        if (team is null)
+        {
+            return NotFound("Team not found.");
+        }
+
+        // If the league has no scoring window well return 0
+        if (team.League!.WeekStartDate is null || team.League.WeekEndDate is null)
+        {
+            return Ok(new FantasyTeamScoreDto { FantasyTeamId = team.Id, TeamName = team.TeamName });
+        }
+            
+
+        var playerScores = new List<PlayerScoreDto>();
+        
+        foreach (var rosterEntry in team.Roster)
+        {
+            // Get all game stats for this player within the scoring window
+            var stats = await _context.NbaPlayerGameStats
+                .Include(s => s.Player)
+                .Include(s => s.Game)
+                .Where(s => s.PlayerId == rosterEntry.PlayerId
+                    && s.Game!.GameDate >= team.League.WeekStartDate
+                    && s.Game.GameDate <= team.League.WeekEndDate)
+                .ToListAsync();
+
+            if (stats.Count == 0) continue;
+
+            // Add al the stats from all games
+            int points     = stats.Sum(s => s.Points ?? 0);
+            int rebounds   = stats.Sum(s => s.Rebounds ?? 0);
+            int assists    = stats.Sum(s => s.Assists ?? 0);
+            int steals     = stats.Sum(s => s.Steals ?? 0);
+            int blocks     = stats.Sum(s => s.Blocks ?? 0);
+            int turnovers  = stats.Sum(s => s.Turnovers ?? 0);
+            int threesMade = stats.Sum(s => s.Fg3Made ?? 0);
+
+            // Apply the scores
+            decimal fantasyPoints = (points     * 1.0m)
+                                  + (rebounds   * 1.2m)
+                                  + (assists    * 1.5m)
+                                  + (steals     * 3.0m)
+                                  + (blocks     * 3.0m)
+                                  + (turnovers  * -1.0m)
+                                  + (threesMade * 0.5m);
+
+            playerScores.Add(new PlayerScoreDto
+            {
+                PlayerId = rosterEntry.PlayerId,
+                PlayerName = stats.First().Player?.FullName,
+                FantasyPoints = fantasyPoints,
+                Points = points,
+                Rebounds = rebounds,
+                Assists = assists,
+                Steals = steals,
+                Blocks = blocks,
+                Turnovers = turnovers,
+                Fg3Made = threesMade
+            });
+        }
+
+        return Ok(new FantasyTeamScoreDto
+        {
+            FantasyTeamId = team.Id,
+            TeamName = team.TeamName,
+            TotalPoints = playerScores.Sum(p => p.FantasyPoints),
+            PlayerScores = playerScores
+        });
     }
 }

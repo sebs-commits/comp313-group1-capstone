@@ -115,7 +115,7 @@ public class LeagueController : ControllerBase
             RosterSize = dto.RosterSize,
             UniqueRosters = dto.UniqueRosters,
             WeekStartDate = dto.WeekStartDate,
-            WeekEndDate = dto.WeekEndDate,
+            WeekEndDate = dto.WeekEndDate ?? dto.WeekStartDate,
             Status = "pending"
         };
 
