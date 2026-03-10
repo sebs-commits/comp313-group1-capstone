@@ -113,6 +113,9 @@ public class LeagueController : ControllerBase
             ScoringType = dto.ScoringType,
             MaxTeams = dto.MaxTeams,
             RosterSize = dto.RosterSize,
+            UniqueRosters = dto.UniqueRosters,
+            WeekStartDate = dto.WeekStartDate,
+            WeekEndDate = dto.WeekEndDate ?? dto.WeekStartDate,
             Status = "pending"
         };
 
@@ -140,6 +143,9 @@ public class LeagueController : ControllerBase
             ScoringType = league.ScoringType,
             MaxTeams = league.MaxTeams,
             RosterSize = league.RosterSize,
+            UniqueRosters = league.UniqueRosters,
+            WeekStartDate = league.WeekStartDate,
+            WeekEndDate = league.WeekEndDate,
             Status = league.Status
         };
 

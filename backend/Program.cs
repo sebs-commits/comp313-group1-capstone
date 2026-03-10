@@ -2,6 +2,7 @@
 using backend.Data;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
+using backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -63,6 +64,7 @@ public class Program
             });
         });
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+        builder.Services.AddScoped<FantasyScoringService>();
 
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
 

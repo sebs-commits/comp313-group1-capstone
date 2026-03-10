@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<NbaLeague> Leagues { get; set; }
     public DbSet<LeagueMember> LeagueMembers { get; set; }
     public DbSet<Profile> Profiles { get; set; }
+    public DbSet<FantasyTeam> FantasyTeams { get; set; }
+    public DbSet<FantasyRoster> FantasyRosters { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +43,29 @@ public class AppDbContext : DbContext
              .WithMany(l => l.Members)
              .HasForeignKey(lm => lm.LeagueId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FantasyTeam>(b =>
+        {
+            b.HasKey(ft => ft.Id);
+            b.HasIndex(ft => new { ft.LeagueId, ft.UserId }).IsUnique();
+            b.HasOne(ft => ft.League)
+             .WithMany(l => l.Teams)
+             .HasForeignKey(ft => ft.LeagueId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FantasyRoster>(b =>
+        {
+            b.HasKey(fr => fr.Id);
+            b.HasOne(fr => fr.FantasyTeam)
+             .WithMany(ft => ft.Roster)
+             .HasForeignKey(fr => fr.FantasyTeamId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(fr => fr.Player)
+             .WithMany()
+             .HasForeignKey(fr => fr.PlayerId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

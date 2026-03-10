@@ -19,7 +19,9 @@ public class NbaLeague
     public int MaxTeams { get; set; } = 10;
     public int RosterSize { get; set; } = 15;
     public string Status { get; set; } = "pending";
+    public bool UniqueRosters { get; set; } = false;
 
     public Profile? CreatedBy { get; set; }
     public ICollection<LeagueMember> Members { get; set; } = new List<LeagueMember>();
+    public ICollection<FantasyTeam> Teams { get; set; } = new List<FantasyTeam>();
 }
