@@ -30,10 +30,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<NbaLeague>(b =>
         {
             b.HasKey(l => l.Id);
-            b.HasOne(l => l.CreatedBy)
-             .WithMany()
-             .HasForeignKey(l => l.CreatedByUserId)
-             .OnDelete(DeleteBehavior.Restrict);
+            b.Ignore(l => l.CreatedBy);
         });
 
         modelBuilder.Entity<LeagueMember>(b =>
@@ -43,10 +40,6 @@ public class AppDbContext : DbContext
             b.HasOne(lm => lm.League)
              .WithMany(l => l.Members)
              .HasForeignKey(lm => lm.LeagueId)
-             .OnDelete(DeleteBehavior.Cascade);
-            b.HasOne(lm => lm.User)
-             .WithMany()
-             .HasForeignKey(lm => lm.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

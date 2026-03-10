@@ -9,5 +9,4 @@ public class LeagueMember
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     public NbaLeague? League { get; set; }
-    public Profile? User { get; set; }
 }
