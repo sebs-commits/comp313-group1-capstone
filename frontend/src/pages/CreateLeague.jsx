@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { PlusCircle, Users, Lock, Globe, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, Lock, Globe, ArrowRight, CheckCircle } from 'lucide-react';
 import Layout from '../components/Layout';
-import './LeagueForms.css';
 
 const CreateLeague = () => {
   const navigate = useNavigate();
@@ -16,6 +15,16 @@ const CreateLeague = () => {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
   const [created, setCreated]   = useState(null);
+
+  const centeredPageStyle = {
+    minHeight: 'calc(100vh - 120px)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: '1rem',
+  };
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -67,11 +76,10 @@ const CreateLeague = () => {
     }
   };
 
-  /* ── Success screen ── */
   if (created) {
     return (
       <Layout>
-        <div className="form-page">
+        <div className="form-page" style={centeredPageStyle}>
           <div className="form-card form-card--success">
             <div className="form-card__icon-wrap" style={{ background: 'rgba(63,185,80,0.12)', color: '#3fb950' }}>
               <CheckCircle size={28} strokeWidth={1.6} />
@@ -108,18 +116,15 @@ const CreateLeague = () => {
     );
   }
 
-  /* ── Create form ── */
   return (
     <Layout>
-      <div className="form-page">
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Create a League</h1>
-            <p className="page-subtitle">Set up your fantasy NBA league and invite your friends.</p>
-          </div>
+      <div className="min-h-[calc(100vh-120px)] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="w-full max-w-[680px]">
+          <h1 className="page-title">Create a League</h1>
+          <p className="page-subtitle">Set up your fantasy NBA league and invite your friends.</p>
         </div>
 
-        <div className="form-card">
+        <div className="form-card w-full max-w-[680px] text-left mx-auto">
           <h2 className="form-card__title">League Settings</h2>
           <p className="form-card__desc">
             Choose your league name and settings to get started.
@@ -200,7 +205,7 @@ const CreateLeague = () => {
           </form>
         </div>
 
-        <p className="form-hint">
+        <p className="form-hint text-center">
           Already have a code?{' '}
           <a href="/join-league" className="form-hint__link">Join an existing league →</a>
         </p>
