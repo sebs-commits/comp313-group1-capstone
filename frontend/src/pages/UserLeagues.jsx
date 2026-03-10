@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import api from '../api';
 
 const UserLeagues = () => {
     const navigate = useNavigate();
@@ -8,17 +9,14 @@ const UserLeagues = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const load = async () => {
+        async function load() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { navigate('/'); return; }
 
-            const res = await fetch(
-                `http://localhost:5050/api/league/my-leagues?userId=${session.user.id}`,
-                { headers: { Authorization: `Bearer ${session.access_token}` } }
-            );
-            if (res.ok) setLeagues(await res.json());
+            const res = await api.get(`/api/league/my-leagues?userId=${session.user.id}`);
+            setLeagues(res.data);
             setLoading(false);
-        };
+        }
         load();
     }, [navigate]);
 

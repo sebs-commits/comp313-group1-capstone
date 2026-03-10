@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-
-const API = 'http://localhost:5050';
+import api from '../api';
 
 const useLeagueDetail = (leagueId) => {
     const navigate = useNavigate();
@@ -19,42 +18,37 @@ const useLeagueDetail = (leagueId) => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { navigate('/'); return; }
             setSession(session);
-            await fetchAll(session);
+            await fetchAll();
             setLoading(false);
         }
         init();
     }, [leagueId]);
 
-    async function fetchAll(s) {
-        const headers = { Authorization: `Bearer ${s.access_token}` };
-
+    async function fetchAll() {
         const [leagueRes, leaderboardRes] = await Promise.all([
-            fetch(`${API}/api/league/${leagueId}`, { headers }),
-            fetch(`${API}/api/fantasy-team/league/${leagueId}/leaderboard`, { headers }),
+            api.get(`/api/league/${leagueId}`),
+            api.get(`/api/fantasy-team/league/${leagueId}/leaderboard`),
         ]);
 
-        if (leagueRes.ok) setLeague(await leagueRes.json());
+        setLeague(leagueRes.data);
 
-        if (!leaderboardRes.ok) return;
-
-        const lb = await leaderboardRes.json();
+        const lb = leaderboardRes.data;
         setLeaderboard(lb);
 
-        const myEntry = lb.find(entry => entry.userId === s.user.id);
+        const { data: { session } } = await supabase.auth.getSession();
+        const myEntry = lb.find(entry => entry.userId === session.user.id);
         if (!myEntry) { setMyTeam(null); setScore(null); return; }
 
         const [teamRes, scoreRes] = await Promise.all([
-            fetch(`${API}/api/fantasy-team/${myEntry.fantasyTeamId}`, { headers }),
-            fetch(`${API}/api/fantasy-team/${myEntry.fantasyTeamId}/score`, { headers }),
+            api.get(`/api/fantasy-team/${myEntry.fantasyTeamId}`),
+            api.get(`/api/fantasy-team/${myEntry.fantasyTeamId}/score`),
         ]);
 
-        if (teamRes.ok) setMyTeam(await teamRes.json());
-        if (scoreRes.ok) setScore(await scoreRes.json());
+        setMyTeam(teamRes.data);
+        setScore(scoreRes.data);
     }
 
-    const refresh = () => { if (session) fetchAll(session); };
-
-    return { session, league, myTeam, score, leaderboard, loading, refresh };
+    return { session, league, myTeam, score, leaderboard, loading, refresh: fetchAll };
 };
 
 export default useLeagueDetail;

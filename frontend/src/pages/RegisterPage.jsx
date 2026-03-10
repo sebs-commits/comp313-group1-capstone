@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import api from '../api';
 
 export default function RegisterPage() {
     const [form, setForm] = useState({
@@ -28,7 +29,7 @@ export default function RegisterPage() {
 
         setLoading(true);
 
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
             email: form.email,
             password: form.password,
         });
@@ -39,23 +40,14 @@ export default function RegisterPage() {
             return;
         }
 
-        const accessToken = data.session?.access_token;
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/profile`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
+        try {
+            await api.post('/api/profile', {
                 username: form.username,
                 firstName: form.firstName,
                 lastName: form.lastName,
-            }),
-        });
-
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            setError(body.message ?? 'Failed to create profile.');
+            });
+        } catch (err) {
+            setError(err.response?.data?.message ?? 'Failed to create profile.');
             setLoading(false);
             return;
         }
