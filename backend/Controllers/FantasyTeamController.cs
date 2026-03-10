@@ -60,7 +60,36 @@ public class FantasyTeamController : ControllerBase
         });
     }
 
-    // GET api/fantasy-team/{id} | placeholder for now
+    // GET api/fantasy-team/{id}
     [HttpGet("{id:int}")]
-    public IActionResult GetTeam(int id) => NotFound("Not implemented yet.");
+    public async Task<ActionResult<FantasyTeamResponseDto>> GetTeam(int id)
+    {
+        var team = await _context.FantasyTeams
+            .Include(ft => ft.Roster)
+                .ThenInclude(fr => fr.Player)
+                    .ThenInclude(p => p!.Team)
+            .FirstOrDefaultAsync(ft => ft.Id == id);
+
+        if (team is null)
+            return NotFound();
+
+        var roster = team.Roster.Select(fr => new RosterPlayerDto
+        {
+            PlayerId = fr.PlayerId,
+            FullName = fr.Player?.FullName,
+            Position = fr.Player?.Position,
+            TeamAbbreviation = fr.Player?.Team?.Abbreviation,
+            AddedAt = fr.AddedAt
+        }).ToList();
+
+        return Ok(new FantasyTeamResponseDto
+        {
+            Id = team.Id,
+            LeagueId = team.LeagueId,
+            UserId = team.UserId,
+            TeamName = team.TeamName,
+            CreatedAt = team.CreatedAt,
+            Roster = roster
+        });
+    }
 }
