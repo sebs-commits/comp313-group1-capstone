@@ -10,6 +10,9 @@ public class CreateLeagueDto
     public string ScoringType { get; set; } = "standard";
     public int MaxTeams { get; set; } = 10;
     public int RosterSize { get; set; } = 15;
+    public bool UniqueRosters { get; set; } = false;
+    public DateOnly? WeekStartDate { get; set; }
+    public DateOnly? WeekEndDate { get; set; }
 }
 
 public class JoinLeagueDto
@@ -34,4 +37,5 @@ public class LeagueResponseDto
     public int MaxTeams { get; set; }
     public int RosterSize { get; set; }
     public string Status { get; set; } = "pending";
+    public bool UniqueRosters { get; set; }
 }
