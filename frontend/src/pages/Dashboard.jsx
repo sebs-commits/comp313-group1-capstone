@@ -55,29 +55,37 @@ const Dashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       Promise.all([
-        fetch('http://localhost:5050/api/Nba/scoreboard').then((r) => r.json()),
-        fetch('http://localhost:5050/api/League', { headers }).then((r) => {
-          if (!r.ok) throw new Error('Unauthorized');
-          return r.json();
-        }),
-        fetch('http://localhost:5050/api/Profile/user', { headers })
-          .then((r) => {
-            if (!r.ok) throw new Error('Unauthorized');
-            return r.json();
-          })
+        fetch('http://localhost:5050/api/Nba/scoreboard')
+          .then((r) => r.json())
           .catch(() => null),
+
+        fetch(`http://localhost:5050/api/league/my-leagues?userId=${session.user.id}`, { headers })
+          .then(async (r) => {
+            const text = await r.text();
+            console.log('[my-leagues] status:', r.status, 'body:', text);
+            if (!r.ok) return [];
+            return JSON.parse(text);
+          })
+          .catch((err) => { console.error('[my-leagues] fetch error:', err); return []; }),
+
+        fetch('http://localhost:5050/api/Profile/user', { headers })
+          .then(async (r) => {
+            const text = await r.text();
+            console.log('[profile] status:', r.status, 'body:', text);
+            if (!r.ok) return null; // <-- stop kicking to login on profile failure
+            return JSON.parse(text);
+          })
+          .catch((err) => { console.error('[profile] fetch error:', err); return null; }),
       ])
         .then(([scoreboardData, leagueData, profileData]) => {
+          console.log('[dashboard] leagues:', leagueData);
+          console.log('[dashboard] userId sent:', session.user.id);
           setGames(scoreboardData?.scoreboard?.games ?? []);
           setLeagues(Array.isArray(leagueData) ? leagueData : []);
           setProfile(profileData);
         })
-        .catch(async (err) => {
+        .catch((err) => {
           console.error('Dashboard fetch error:', err);
-          if (err.message === 'Unauthorized') {
-            await supabase.auth.signOut();
-            navigate('/');
-          }
         })
         .finally(() => setLoading(false));
     };

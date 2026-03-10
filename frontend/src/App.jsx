@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import CreateLeague from './pages/CreateLeague';
 import ProfilePage from './pages/ProfilePage';
+import JoinLeague from './pages/JoinLeague';
 
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-league" element={<CreateLeague />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/join-league" element={<JoinLeague />} />
             </Routes>
         </Router>
     );

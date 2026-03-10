@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/league")]
 public class LeagueController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -46,8 +46,32 @@ public class LeagueController : ControllerBase
         return Ok(leagues);
     }
 
+    // GET api/league/my-leagues?userId={guid}
+    [HttpGet("my-leagues")]
+    public async Task<ActionResult<IEnumerable<LeagueResponseDto>>> GetMyLeagues([FromQuery] Guid userId)
+    {
+        if (userId == Guid.Empty)
+            return BadRequest("A valid userId is required.");
+
+        var leagues = await _context.LeagueMembers
+            .Where(lm => lm.UserId == userId)
+            .Select(lm => new LeagueResponseDto
+            {
+                Id = lm.League!.Id,
+                Name = lm.League.Name,
+                Description = lm.League.Description,
+                IsPublic = lm.League.IsPublic,
+                InviteCode = lm.League.InviteCode,
+                CreatedByUserId = lm.League.CreatedByUserId,
+                MemberCount = lm.League.Members.Count
+            })
+            .ToListAsync();
+
+        return Ok(leagues);
+    }
+
     // GET api/league/{id}
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<LeagueResponseDto>> GetLeague(int id)
     {
         var league = await _context.Leagues
@@ -78,10 +102,6 @@ public class LeagueController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LeagueResponseDto>> CreateLeague(CreateLeagueDto dto)
     {
-        var userExists = await _context.Profiles.AnyAsync(p => p.Id == dto.CreatedByUserId);
-        if (!userExists)
-            return BadRequest("Invalid user.");
-
         var league = new NbaLeague
         {
             Name = dto.Name,
@@ -99,7 +119,6 @@ public class LeagueController : ControllerBase
         _context.Leagues.Add(league);
         await _context.SaveChangesAsync();
 
-        // Auto-add the creator as commissioner
         _context.LeagueMembers.Add(new LeagueMember
         {
             LeagueId = league.Id,
@@ -127,8 +146,38 @@ public class LeagueController : ControllerBase
         return CreatedAtAction(nameof(GetLeague), new { id = league.Id }, response);
     }
 
+    // POST api/league/join-by-code
+    [HttpPost("join-by-code")]
+    public async Task<IActionResult> JoinByInviteCode(JoinLeagueDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.InviteCode))
+            return BadRequest("Invite code is required.");
+
+        var league = await _context.Leagues
+            .FirstOrDefaultAsync(l => l.InviteCode == dto.InviteCode.ToUpper());
+
+        if (league is null)
+            return NotFound("No league found with that invite code.");
+
+        var alreadyMember = await _context.LeagueMembers
+            .AnyAsync(lm => lm.LeagueId == league.Id && lm.UserId == dto.UserId);
+
+        if (alreadyMember)
+            return Conflict("User is already a member of this league.");
+
+        _context.LeagueMembers.Add(new LeagueMember
+        {
+            LeagueId = league.Id,
+            UserId = dto.UserId,
+            Role = "member"
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Joined league successfully.", leagueId = league.Id, leagueName = league.Name });
+    }
+
     // POST api/league/{id}/join
-    [HttpPost("{id}/join")]
+    [HttpPost("{id:int}/join")]
     public async Task<IActionResult> JoinLeague(int id, JoinLeagueDto dto)
     {
         var league = await _context.Leagues.FindAsync(id);
@@ -136,11 +185,7 @@ public class LeagueController : ControllerBase
             return NotFound("League not found.");
 
         if (!league.IsPublic)
-        {
-            if (string.IsNullOrWhiteSpace(dto.InviteCode) ||
-                !string.Equals(league.InviteCode, dto.InviteCode, StringComparison.OrdinalIgnoreCase))
-                return BadRequest("Invalid invite code.");
-        }
+            return BadRequest("This league is private. Use the invite code endpoint to join.");
 
         var alreadyMember = await _context.LeagueMembers
             .AnyAsync(lm => lm.LeagueId == id && lm.UserId == dto.UserId);
