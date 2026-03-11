@@ -1,4 +1,5 @@
 using backend.Models;
+using backend.DTOs;
 using backend.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,15 +21,50 @@ public class ProfileController : ControllerBase
     {
         var sub = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                   ?? User.FindFirst("sub")?.Value;
-    
-        if (string.IsNullOrEmpty(sub)) return null;
-        return Guid.Parse(sub);
-    }
 
+        if (string.IsNullOrEmpty(sub)) return null;
+        return Guid.TryParse(sub, out var userId) ? userId : null;
+    }
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<IActionResult> RegisterProfile([FromBody] RegisterProfileRequestDto request)
+    {
+        if (request.UserId == Guid.Empty)
+            return BadRequest(new { message = "Invalid user ID." });
+
+        if (string.IsNullOrWhiteSpace(request.Username))
+            return BadRequest(new { message = "Username is required." });
+
+        var existing = await _profileRepository.GetByIdAsync(request.UserId);
+        if (existing != null)
+            return Conflict(new { message = "Profile already exists." });
+
+        var usernameExists = await _profileRepository.GetByUsernameAsync(request.Username);
+        if (usernameExists != null)
+            return Conflict(new { message = "Username already taken." });
+
+        var profile = new Profile
+        {
+            Id = request.UserId,
+            Username = request.Username,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        await _profileRepository.CreateAsync(profile);
+
+        return Ok(new
+        {
+            message = "Profile created successfully."
+        });
+    }
     [HttpGet("user")]
     public async Task<IActionResult> GetMyProfile()
     {
         var userId = GetUserId();
+
         if (userId == null)
             return Unauthorized(new { message = "Invalid token" });
 

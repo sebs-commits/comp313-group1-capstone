@@ -31,7 +31,8 @@ public class Program
                     ValidateAudience = true,
                     ValidAudience = "authenticated",
                     ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true
+                    ValidateIssuerSigningKey = true,
+                    NameClaimType = "sub"
                 };
             });
 
@@ -69,15 +70,14 @@ public class Program
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
 
         builder.Services.AddCors(options => {
-            options.AddDefaultPolicy(policy => {
-                policy.WithOrigins("http://localhost:5173") 
+            options.AddPolicy("FrontendPolicy", policy => {
+                policy.WithOrigins("http://localhost:5173")
                       .AllowAnyHeader()
                       .AllowAnyMethod();
             });
         });
 
         var app = builder.Build();
-        app.UseCors();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -87,6 +87,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("FrontendPolicy");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
