@@ -109,7 +109,9 @@ public class LeagueController : ControllerBase
             IsPublic = dto.IsPublic,
             CreatedByUserId = dto.CreatedByUserId,
             InviteCode = dto.IsPublic ? null : Guid.NewGuid().ToString("N")[..8].ToUpper(),
-            DraftDate = dto.DraftDate,
+            DraftDate = dto.DraftDate.HasValue
+                ? DateTime.SpecifyKind(dto.DraftDate.Value, DateTimeKind.Utc)
+                : null,
             ScoringType = dto.ScoringType,
             MaxTeams = dto.MaxTeams,
             RosterSize = dto.RosterSize,
@@ -126,7 +128,8 @@ public class LeagueController : ControllerBase
         {
             LeagueId = league.Id,
             UserId = dto.CreatedByUserId,
-            Role = "commissioner"
+            Role = "commissioner",
+            JoinedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
