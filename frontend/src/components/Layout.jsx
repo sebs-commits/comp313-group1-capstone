@@ -28,7 +28,10 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="drawer-content flex flex-col min-h-screen">
         <div className="navbar bg-base-200 border-b border-base-300">
-          <button className="btn btn-ghost btn-sm" onClick={() => setOpen(!open)}>
+          <label htmlFor="app-drawer" className="btn btn-ghost btn-sm lg:hidden">
+            <Menu size={20} />
+          </label>
+          <button className="btn btn-ghost btn-sm hidden lg:flex" onClick={() => setOpen(!open)}>
             <Menu size={20} />
           </button>
           <span className="ml-2 font-bold lg:hidden">NBAFL</span>
