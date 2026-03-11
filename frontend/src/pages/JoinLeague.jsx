@@ -15,6 +15,7 @@ const JoinLeague = () => {
 
   // --- Public leagues state ---
   const [publicLeagues, setPublicLeagues] = useState([]);
+  const [myLeagueIds, setMyLeagueIds] = useState(new Set());
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseError, setBrowseError] = useState('');
   const [search, setSearch] = useState('');
@@ -33,9 +34,22 @@ const JoinLeague = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
-        const res = await fetch('http://localhost:5050/api/League', { headers });
-        if (!res.ok) throw new Error(`Failed to load leagues (${res.status})`);
-        setPublicLeagues(await res.json());
+
+        const [publicRes, myRes] = await Promise.all([
+          fetch('http://localhost:5050/api/League', { headers }),
+          session
+            ? fetch(`http://localhost:5050/api/league/my-leagues?userId=${session.user.id}`, { headers })
+            : Promise.resolve(null),
+        ]);
+
+        if (!publicRes.ok) throw new Error(`Failed to load leagues (${publicRes.status})`);
+        const [publicData, myData] = await Promise.all([
+          publicRes.json(),
+          myRes?.ok ? myRes.json() : Promise.resolve([]),
+        ]);
+
+        setPublicLeagues(publicData);
+        setMyLeagueIds(new Set((myData ?? []).map((l) => l.id)));
       } catch (err) {
         setBrowseError(err.message);
       } finally {
@@ -110,6 +124,7 @@ const JoinLeague = () => {
         throw new Error(typeof data === 'string' ? data : data?.message || 'Unable to join league.');
       }
 
+      setMyLeagueIds((prev) => new Set([...prev, league.id]));
       setJoinSuccess(`Joined "${league.name}" successfully.`);
       setTimeout(() => navigate(`/leagues/${league.id}`), 600);
     } catch (err) {
@@ -254,15 +269,19 @@ const JoinLeague = () => {
                           {league.scoringType && <span className="capitalize">{league.scoringType}</span>}
                         </div>
                       </div>
-                      <button
-                        className="btn btn-primary btn-sm shrink-0"
-                        disabled={joiningId === league.id}
-                        onClick={() => handleJoinPublic(league)}
-                      >
-                        {joiningId === league.id
-                          ? <span className="loading loading-spinner loading-xs" />
-                          : <>Join <ArrowRight size={13} /></>}
-                      </button>
+                      {myLeagueIds.has(league.id) ? (
+                        <span className="badge badge-success badge-sm shrink-0 px-3 py-3">Joined</span>
+                      ) : (
+                        <button
+                          className="btn btn-primary btn-sm shrink-0"
+                          disabled={joiningId === league.id}
+                          onClick={() => handleJoinPublic(league)}
+                        >
+                          {joiningId === league.id
+                            ? <span className="loading loading-spinner loading-xs" />
+                            : <>Join <ArrowRight size={13} /></>}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
