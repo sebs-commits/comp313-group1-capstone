@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import api from '../api';
+import Layout from '../components/Layout';
 import MyLeaguesList from '../components/dashboard/MyLeaguesList';
 
 const UserLeagues = () => {
@@ -22,10 +23,12 @@ const UserLeagues = () => {
     }, [navigate]);
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-4">
-            <h1 className="text-2xl font-bold">My Leagues</h1>
-            <MyLeaguesList loading={loading} leagues={leagues} />
-        </div>
+        <Layout>
+            <div className="max-w-2xl mx-auto flex flex-col gap-4">
+                <h1 className="text-2xl font-bold">My Leagues</h1>
+                <MyLeaguesList loading={loading} leagues={leagues} />
+            </div>
+        </Layout>
     );
 };
 
