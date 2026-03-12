@@ -12,7 +12,7 @@ const PlayerSearch = ({ search, onSearchChange, onSearch, results, onAdd }) => {
                             onChange={e => onSearchChange(e.target.value)}
                             className="input input-bordered"
                         />
-                        <button type="submit" className="btn btn-primary">Search</button>
+                        <button type="submit" className="btn btn-primary m-2">Search</button>
                     </div>
                 </form>
 
