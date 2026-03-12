@@ -4,8 +4,11 @@ const Leaderboard = ({ entries, currentUserId }) => {
     if (entries.length === 0) return <p className="text-center">No teams yet.</p>;
 
     return (
-        <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
+        <div className="card bg-base-200 border border-base-300">
+            <div className="card-body p-0">
+                <div className="px-6 py-4 border-b border-base-300">
+                    <h2 className="card-title text-base">Leaderboard</h2>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="table table-zebra">
                         <thead>
