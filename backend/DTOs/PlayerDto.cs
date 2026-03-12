@@ -9,3 +9,10 @@ public class PlayerDto
     public string? TeamAbbreviation { get; set; }
     public string? JerseyNumber { get; set; }
 }
+
+public class TeamDto
+{
+    public int TeamId { get; set; }
+    public string? FullName { get; set; }
+    public string? Abbreviation { get; set; }
+}

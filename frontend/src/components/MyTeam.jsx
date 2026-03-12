@@ -6,10 +6,8 @@ import PlayerSearch from './PlayerSearch';
 const MyTeam = ({ team, score, league, session, onTeamChange }) => {
     const [teamName, setTeamName] = useState('');
     const [creating, setCreating] = useState(false);
-    const [search, setSearch] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
     const [message, setMessage] = useState('');
-    const [isError, setIsError]= useState(false);
+    const [isError, setIsError] = useState(false);
 
     const showMessage = (text, error = false) => {
         setMessage(text);
@@ -35,17 +33,10 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
         setCreating(false);
     }
 
-    async function handleSearch(e) {
-        e.preventDefault();
-        const res = await api.get(`/api/player/available/${league.id}`, { params: { search } });
-        setSearchResults(res.data);
-    }
-
     async function handleAddPlayer(playerId) {
         try {
             await api.post(`/api/fantasy-team/${team.id}/roster`, { playerId });
             showMessage('Player added!');
-            setSearchResults(prev => prev.filter(p => p.playerId !== playerId));
             onTeamChange();
         } catch (err) {
             showMessage(err.response?.data ?? err.message, true);
@@ -111,10 +102,7 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
 
             {!rosterFull && (
                 <PlayerSearch
-                    search={search}
-                    onSearchChange={setSearch}
-                    onSearch={handleSearch}
-                    results={searchResults}
+                    leagueId={league.id}
                     onAdd={handleAddPlayer}
                 />
             )}
