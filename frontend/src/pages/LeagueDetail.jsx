@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useLeagueDetail from '../hooks/useLeagueDetail';
+import Layout from '../components/Layout';
 import LeagueInfo from '../components/LeagueInfo';
 import MyTeam from '../components/MyTeam';
 import Leaderboard from '../components/Leaderboard';
@@ -10,38 +11,43 @@ const LeagueDetail = () => {
     const { session, league, myTeam, score, leaderboard, loading, refresh } = useLeagueDetail(id);
     const [message, setMessage] = useState('');
 
-    function copyInviteCode() {
+    const copyInviteCode = () => {
         navigator.clipboard.writeText(league.inviteCode);
         setMessage('Invite code copied!');
-    }
+        setTimeout(() => setMessage(''), 2500);
+    };
 
-    if (loading) return <p>Loading...</p>;
-    if (!league) return <p>League not found. <Link to="/userLeagues">Back</Link></p>;
+    if (loading) return (
+        <Layout>
+            <div className="flex justify-center py-20">
+                <span className="loading loading-spinner loading-lg text-primary" />
+            </div>
+        </Layout>
+    );
+
 
     return (
-        <div>
-            <Link to="/userLeagues">Back to My Leagues</Link>
+        <Layout>
+            <div className="flex flex-col gap-6">
 
-            {message && <p><strong>{message}</strong></p>}
+                <LeagueInfo
+                    league={league}
+                    onCopy={copyInviteCode}
+                    currentUserId={session?.user?.id}
+                />
 
-            <LeagueInfo league={league} onCopy={copyInviteCode} />
+                <MyTeam
+                    team={myTeam}
+                    score={score}
+                    league={league}
+                    session={session}
+                    onTeamChange={refresh}
+                />
 
-            <hr />
+                <Leaderboard entries={leaderboard} currentUserId={session?.user?.id} />
 
-            <h2>My Team</h2>
-            <MyTeam
-                team={myTeam}
-                score={score}
-                league={league}
-                session={session}
-                onTeamChange={refresh}
-            />
-
-            <hr />
-
-            <h2>Leaderboard</h2>
-            <Leaderboard entries={leaderboard} currentUserId={session?.user?.id} />
-        </div>
+            </div>
+        </Layout>
     );
 };
 

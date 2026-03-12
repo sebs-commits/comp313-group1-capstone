@@ -143,6 +143,24 @@ public class FantasyTeamController : ControllerBase
             }
         }
 
+        if (team.League!.WeekStartDate is not null && team.League.WeekEndDate is not null)
+        {
+            var playerTeamId = await _context.NbaPlayers
+                .Where(p => p.PlayerId == dto.PlayerId)
+                .Select(p => p.TeamId)
+                .FirstOrDefaultAsync();
+
+            var hasGameInWindow = await _context.NbaGames
+                .AnyAsync(g => g.GameDate >= team.League.WeekStartDate.Value
+                            && g.GameDate <= team.League.WeekEndDate.Value
+                            && (g.HomeTeamId == playerTeamId || g.AwayTeamId == playerTeamId));
+
+            if (!hasGameInWindow)
+            {
+                return BadRequest("This player's team has no games scheduled within the league's scoring window.");
+            }
+        }
+
         var player = await _context.NbaPlayers.FindAsync(dto.PlayerId);
         if (player is null)
         {
