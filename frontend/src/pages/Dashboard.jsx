@@ -30,15 +30,15 @@ const Dashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [scoreboardData, leagueData, profileData] = await Promise.all([
-        fetch('http://localhost:5050/api/Nba/scoreboard')
+        fetch(`${import.meta.env.VITE_API_URL}/api/Nba/scoreboard`)
           .then((r) => r.json())
           .catch(() => null),
 
-        fetch(`http://localhost:5050/api/league/my-leagues?userId=${session.user.id}`, { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/league/my-leagues?userId=${session.user.id}`, { headers })
           .then((r) => r.ok ? r.json() : [])
           .catch(() => []),
 
-        fetch('http://localhost:5050/api/Profile/user', { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/Profile/user`, { headers })
           .then((r) => r.ok ? r.json() : null)
           .catch(() => null),
       ]);

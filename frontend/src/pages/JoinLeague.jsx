@@ -36,9 +36,9 @@ const JoinLeague = () => {
         const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
         const [publicRes, myRes] = await Promise.all([
-          fetch('http://localhost:5050/api/League', { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/League`, { headers }),
           session
-            ? fetch(`http://localhost:5050/api/league/my-leagues?userId=${session.user.id}`, { headers })
+            ? fetch(`${import.meta.env.VITE_API_URL}/api/league/my-leagues?userId=${session.user.id}`, { headers })
             : Promise.resolve(null),
         ]);
 
@@ -70,7 +70,7 @@ const JoinLeague = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setCodeError('You must be logged in to join a league.'); navigate('/'); return; }
 
-      const response = await fetch('http://localhost:5050/api/League/join-by-code', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/League/join-by-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ userId: session.user.id, inviteCode: code.trim().toUpperCase() }),
@@ -111,7 +111,7 @@ const JoinLeague = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate('/'); return; }
 
-      const response = await fetch(`http://localhost:5050/api/League/${league.id}/join`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/League/${league.id}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ userId: session.user.id }),
