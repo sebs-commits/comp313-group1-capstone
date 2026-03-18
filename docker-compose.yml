@@ -20,6 +20,8 @@ services:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_SUPABASE_URL=${SUPABASE_URL}
         - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+        - VITE_DEMO_EMAIL=${VITE_DEMO_EMAIL}
+        - VITE_DEMO_PASSWORD=${VITE_DEMO_PASSWORD}
     ports:
       - "80:80"
     depends_on:
