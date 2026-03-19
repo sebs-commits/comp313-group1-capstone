@@ -17,7 +17,7 @@ const LivePlayerData = () => {
   const [expandedGames, setExpandedGames] = useState(new Set());
 
   useEffect(() => {
-    fetch('http://localhost:5050/api/nba/scoreboard')
+    fetch(`${import.meta.env.VITE_API_URL}/api/nba/scoreboard`)
       .then((res) => res.json())
       .then((data) => {
         setGames(data.scoreboard.games);
