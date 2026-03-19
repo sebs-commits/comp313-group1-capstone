@@ -218,8 +218,8 @@ const CreateLeague = () => {
                     onChange={set('scoringType')}
                   >
                     <option value="standard">Standard</option>
-                    <option value="points">Points</option>
-                    <option value="categories">Categories</option>
+                    <option value="points" disabled>Points (coming soon)</option>
+                    <option value="categories" disabled>Categories (coming soon)</option>
                   </select>
                 </fieldset>
                 <fieldset className="fieldset">
