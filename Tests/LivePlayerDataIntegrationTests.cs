@@ -1,5 +1,6 @@
 using Xunit;
 using Xunit.Abstractions;
+using backend.Services;
 using backend;
 
 namespace Tests;
@@ -24,9 +25,12 @@ public class LivePlayerDataIntegrationTests
 
         Assert.NotNull(result);
 
-        foreach (var game in result.Scoreboard.Games)
+        if (result.Scoreboard?.Games != null)
         {
-            _output.WriteLine($"GAME: {game.AwayTeam.TeamName} @ {game.HomeTeam.TeamName}");
+            foreach (var game in result.Scoreboard.Games)
+            {
+                _output.WriteLine($"Parsed Game: {game.AwayTeam.TeamName} @ {game.HomeTeam.TeamName}");
+            }
         }
     }
 }

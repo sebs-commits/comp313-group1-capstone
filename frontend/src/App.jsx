@@ -23,6 +23,7 @@ export default function App() {
                 <Route path="/create-league" element={<CreateLeague />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/join-league" element={<JoinLeague />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
             </Routes>
         </Router>
     );

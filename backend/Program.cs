@@ -1,4 +1,3 @@
-
 using backend.Data;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
@@ -76,6 +75,9 @@ public class Program
                       .AllowAnyMethod();
             });
         });
+
+        builder.Services.AddSingleton<IEmailService, EmailService>();
+        builder.Services.AddHostedService<InjuryUpdateWorker>();
 
         var app = builder.Build();
 
