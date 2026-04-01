@@ -31,11 +31,18 @@ public class ProfileRepository : IProfileRepository
         await _dbContext.SaveChangesAsync();
         return profile;
     }
-    // TODO: UPDATE Profile
+
     public async Task<Profile> UpdateAsync(Profile profile)
     {
         _dbContext.Profiles.Update(profile);
         await _dbContext.SaveChangesAsync();
         return profile;
+    }
+
+    public async Task<List<Profile>> GetAllAsync()
+    {
+        return await _dbContext.Profiles
+            .OrderBy(p => p.Username)
+            .ToListAsync();
     }
 }

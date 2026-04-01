@@ -3,99 +3,132 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const handleDemoLogin = async () => {
-        setError('');
-        setLoading(true);
+  const checkBanStatus = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email: import.meta.env.VITE_DEMO_EMAIL,
-            password: import.meta.env.VITE_DEMO_PASSWORD,
-        });
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Profile/user`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-            return;
-        }
+    if (!res.ok) return false;
 
-        navigate('/dashboard');
-    };
+    const profile = await res.json();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    if (profile.isPermanentlyBanned) {
+      await supabase.auth.signOut();
+      setError(`This account has been permanently banned. Reason: ${profile.banReason ?? 'No reason provided.'}`);
+      return true;
+    }
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (profile.bannedUntil && new Date(profile.bannedUntil) > new Date()) {
+      await supabase.auth.signOut();
+      setError(`This account is temporarily banned until ${new Date(profile.bannedUntil).toLocaleString()}. Reason: ${profile.banReason ?? 'No reason provided.'}`);
+      return true;
+    }
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-            return;
-        }
+    return false;
+  };
 
-        navigate('/dashboard');
-    };
+  const handleDemoLogin = async () => {
+    setError('');
+    setLoading(true);
 
-    return (
-        <div data-theme="dark" className="min-h-screen w-full flex items-center justify-center">
-            <div className="card bg-base-100 shadow-xl w-full max-w-sm">
-                <div className="card-body">
-                    <h1 className="card-title text-2xl justify-center mb-2">Welcome</h1>
+    const { error } = await supabase.auth.signInWithPassword({
+      email: import.meta.env.VITE_DEMO_EMAIL,
+      password: import.meta.env.VITE_DEMO_PASSWORD,
+    });
 
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <fieldset className="fieldset">
-                            <legend className="fieldset-legend">Email</legend>
-                            <input
-                                id="email"
-                                type="email"
-                                className="input w-full"
-                                placeholder="name@nba.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </fieldset>
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
 
-                        <fieldset className="fieldset">
-                            <legend className="fieldset-legend">Password</legend>
-                            <input
-                                id="password"
-                                type="password"
-                                className="input w-full"
-                                placeholder="********"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </fieldset>
+    const blocked = await checkBanStatus();
+    if (!blocked) navigate('/dashboard');
+    setLoading(false);
+  };
 
-                        {error && (
-                            <div role="alert" className="alert alert-error">
-                                <span>{error}</span>
-                            </div>
-                        )}
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-                        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                            {loading ? <span className="loading loading-spinner loading-sm" /> : 'Login'}
-                        </button>
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-                        <button type="button" className="btn btn-ghost" onClick={handleDemoLogin} disabled={loading}>
-                            Demo
-                        </button>
-                    </form>
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
 
-                    <p className="text-center text-sm mt-2">
-                        Don't have an account? <a className="link link-primary" href="/register">Register</a>
-                    </p>
-                </div>
-            </div>
+    const blocked = await checkBanStatus();
+    if (!blocked) navigate('/dashboard');
+    setLoading(false);
+  };
+
+  return (
+    <div data-theme="dark" className="min-h-screen w-full flex items-center justify-center">
+      <div className="card bg-base-100 shadow-xl w-full max-w-sm">
+        <div className="card-body">
+          <h1 className="card-title text-2xl justify-center mb-2">Welcome</h1>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Email</legend>
+              <input
+                id="email"
+                type="email"
+                className="input w-full"
+                placeholder="name@nba.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </fieldset>
+
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Password</legend>
+              <input
+                id="password"
+                type="password"
+                className="input w-full"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </fieldset>
+
+            {error && (
+              <div role="alert" className="alert alert-error">
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+              {loading ? <span className="loading loading-spinner loading-sm" /> : 'Login'}
+            </button>
+
+            <button type="button" className="btn btn-ghost" onClick={handleDemoLogin} disabled={loading}>
+              Demo
+            </button>
+          </form>
+
+          <p className="text-center text-sm mt-2">
+            Don't have an account? <a className="link link-primary" href="/register">Register</a>
+          </p>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

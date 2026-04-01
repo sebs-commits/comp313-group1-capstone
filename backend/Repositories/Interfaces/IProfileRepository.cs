@@ -11,4 +11,5 @@ public interface IProfileRepository
     Task<Profile> CreateAsync(Profile profile);
     // Update profile
     Task<Profile> UpdateAsync(Profile profile);
+    Task<List<Profile>> GetAllAsync();
 }
