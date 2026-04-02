@@ -1,8 +1,10 @@
 using backend.Models;
 using backend.DTOs;
+using backend.Data;
 using backend.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 [ApiController]
@@ -80,8 +82,32 @@ public class ProfileController : ControllerBase
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             CreatedAt = profile.CreatedAt,
-            IsActive = profile.IsActive
+            IsActive = profile.IsActive,
+            IsAdmin = profile.IsAdmin,
+            BanReason = profile.BanReason,
+            BannedUntil = profile.BannedUntil,
+            IsPermanentlyBanned = profile.IsPermanentlyBanned
         });
+    }
+    [HttpGet("warnings")]
+    public async Task<IActionResult> GetMyWarnings([FromServices] AppDbContext dbContext)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(new { message = "Invalid token" });
+
+        var warnings = await dbContext.Warnings
+            .Where(w => w.UserId == userId.Value)
+            .OrderByDescending(w => w.CreatedAt)
+            .Select(w => new
+            {
+                w.Id,
+                w.Message,
+                w.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(warnings);
     }
     [HttpPost]
     public async Task<IActionResult> CreateProfile(ProfileDto request)
@@ -117,7 +143,11 @@ public class ProfileController : ControllerBase
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             CreatedAt = profile.CreatedAt,
-            IsActive = profile.IsActive
+            IsActive = profile.IsActive,
+            IsAdmin = profile.IsAdmin,
+            BanReason = profile.BanReason,
+            BannedUntil = profile.BannedUntil,
+            IsPermanentlyBanned = profile.IsPermanentlyBanned
         });
     }
     [HttpPut]
@@ -152,7 +182,11 @@ public class ProfileController : ControllerBase
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             CreatedAt = profile.CreatedAt,
-            IsActive = profile.IsActive
+            IsActive = profile.IsActive,
+            IsAdmin = profile.IsAdmin,
+            BanReason = profile.BanReason,
+            BannedUntil = profile.BannedUntil,
+            IsPermanentlyBanned = profile.IsPermanentlyBanned
         });
     }
 }

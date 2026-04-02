@@ -24,6 +24,19 @@ public class Profile
 
     [Column("last_login")]
     public DateTime? LastLogin { get; set; }
+
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
+
+    [Column("is_admin")]
+    public bool IsAdmin { get; set; } = false;
+
+    [Column("ban_reason")]
+    public string? BanReason { get; set; }
+
+    [Column("banned_until")]
+    public DateTime? BannedUntil { get; set; }
+
+    [Column("is_permanently_banned")]
+    public bool IsPermanentlyBanned { get; set; } = false;
 }
