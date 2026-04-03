@@ -9,7 +9,7 @@ import CreateLeague from './pages/CreateLeague';
 import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
-
+import NotificationsDashboard from './pages/NotificationsDashboard';
 
 export default function App() {
     return (
@@ -24,7 +24,6 @@ export default function App() {
                 <Route path="/create-league" element={<CreateLeague />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/join-league" element={<JoinLeague />} />
-                <Route path="/admin" element={<AdminPage />} />
             </Routes>
         </Router>
     );
