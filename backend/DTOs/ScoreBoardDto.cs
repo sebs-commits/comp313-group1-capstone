@@ -122,6 +122,8 @@ public class GameLeader
     public int Points { get; set; }
     public int Rebounds { get; set; }
     public int Assists { get; set; }
+    public int Steals { get; set; } 
+    public int Blocks { get; set; } 
 }
 
 public class PbOddsData

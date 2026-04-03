@@ -1,4 +1,3 @@
-
 using backend.Data;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
@@ -15,10 +14,10 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
+
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-        
+
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -36,9 +35,9 @@ public class Program
                 };
             });
 
-        // Add services to the container.
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+
         builder.Services.AddSwaggerGen(options =>
         {
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -64,33 +63,42 @@ public class Program
                 }
             });
         });
+
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
-
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
 
         builder.Services.AddCors(options => {
             options.AddPolicy("FrontendPolicy", policy => {
-                policy.WithOrigins("http://localhost:5173", "http://localhost:80", "http://localhost", "https://frontend.randomprojects.app")
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
+                policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:5174", 
+                        "http://localhost:80",
+                        "http://localhost",
+                        "https://frontend.randomprojects.app"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); 
             });
         });
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection();
         app.UseCors("FrontendPolicy");
+
+        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
+
         app.MapControllers();
+
         app.Run();
     }
 }

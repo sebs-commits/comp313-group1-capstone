@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield} from 'lucide-react';
+import { LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, BarChart2, User, LogOut, Menu, Shield} from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const baseNavItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/livePlayerData', label: 'Live Scores', icon: Activity },
-  { path: '/userLeagues', label: 'My Leagues', icon: Trophy },
-  { path: '/join-league', label: 'Join League', icon: UserPlus },
-  { path: '/create-league', label: 'Create League', icon: PlusSquare },
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/live-player-stats', label: 'Live Player Stats', icon: Activity },
+    { path: '/userLeagues', label: 'My Leagues', icon: Trophy },
+    { path: '/join-league', label: 'Join League', icon: UserPlus },
+    { path: '/create-league', label: 'Create League', icon: PlusSquare },
+    { path: '/live-game-stats', label: 'Live Game Stats', icon: BarChart2 },
 ];
 
 const Layout = ({ children }) => {
