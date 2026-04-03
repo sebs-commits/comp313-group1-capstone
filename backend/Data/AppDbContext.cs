@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<FantasyTeam> FantasyTeams { get; set; }
     public DbSet<FantasyRoster> FantasyRosters { get; set; }
+    public DbSet<Warning> Warnings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +67,15 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(fr => fr.PlayerId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Warning>(b =>
+        {
+            b.HasKey(w => w.Id);
+            b.HasOne(w => w.User)
+             .WithMany()
+             .HasForeignKey(w => w.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

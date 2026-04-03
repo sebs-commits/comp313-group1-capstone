@@ -12,16 +12,13 @@ const NotificationsPage = () => {
 
     useEffect(() => {
         const fetchNotifications = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { navigate('/'); return; }
-
-            const token = session.access_token;
-            const headers = { Authorization: `Bearer ${token}` };
-
+            setLoading(true);
             try {
-                const response = await fetch(`http://localhost:5050/api/Notification?userId=${session.user.id}`, { headers });
+                const response = await fetch('http://localhost:5050/api/Notification');
+
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("Data from API:", data); 
                     setNotifications(data);
                 }
             } catch (error) {
@@ -32,7 +29,7 @@ const NotificationsPage = () => {
         };
 
         fetchNotifications();
-    }, [navigate]);
+    }, []);
 
     const filteredNotifications = notifications.filter(n =>
         filter === 'ALL' ? true : n.type.toUpperCase() === filter

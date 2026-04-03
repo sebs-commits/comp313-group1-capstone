@@ -8,4 +8,8 @@ public class ProfileDto
     public string LastName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; }
+    public bool IsAdmin { get; set; }
+    public string? BanReason { get; set; }
+    public DateTime? BannedUntil { get; set; }
+    public bool IsPermanentlyBanned { get; set; }
 }

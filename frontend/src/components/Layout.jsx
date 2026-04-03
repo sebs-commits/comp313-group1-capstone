@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu } from 'lucide-react';
+<<<<<<< HEAD
+import { LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, HeartPulse } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const navItems = [
@@ -8,18 +9,67 @@ const navItems = [
   { path: '/livePlayerData',label: 'Live Scores',icon: Activity },
   { path: '/userLeagues',label: 'My Leagues', icon: Trophy },
   { path: '/join-league',label: 'Join League',icon: UserPlus },
-  { path: '/create-league',label: 'Create League', icon: PlusSquare },
+  { path: '/create-league', label: 'Create League', icon: PlusSquare },
+    { path: '/notifications', label: 'View Health Notifications', icon: HeartPulse },
+=======
+import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield} from 'lucide-react';
+import { supabase } from '../supabaseClient';
+
+const baseNavItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/livePlayerData', label: 'Live Scores', icon: Activity },
+  { path: '/userLeagues', label: 'My Leagues', icon: Trophy },
+  { path: '/join-league', label: 'Join League', icon: UserPlus },
+  { path: '/create-league', label: 'Create League', icon: PlusSquare },
+>>>>>>> origin/main
 ];
 
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(true);
-  const location        = useLocation();
-  const navigate        = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          setIsAdmin(false);
+          return;
+        }
+
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Profile/user`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!res.ok) {
+          setIsAdmin(false);
+          return;
+        }
+
+        const profile = await res.json();
+        setIsAdmin(profile.isAdmin === true);
+      } catch (err) {
+        console.error('Error loading profile in layout:', err);
+        setIsAdmin(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
+
+  const navItems = isAdmin
+    ? [...baseNavItems, { path: '/admin', label: 'Admin', icon: Shield }]
+    : baseNavItems;
 
   return (
     <div className={`drawer min-h-screen bg-base-100 ${open ? 'lg:drawer-open' : ''}`}>
@@ -69,7 +119,7 @@ const Layout = ({ children }) => {
             })}
           </ul>
 
-          {/* Footer- logout */}
+          {/* Footer */}
           <div className="flex items-center gap-2 p-3 border-t border-base-300">
             <Link to="/profile" className="btn btn-ghost btn-sm flex-1 justify-start gap-2 text-base-content/60">
               <User size={15} />
