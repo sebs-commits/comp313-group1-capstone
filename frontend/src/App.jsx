@@ -9,6 +9,7 @@ import CreateLeague from './pages/CreateLeague';
 import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
+import DraftRoom from './pages/DraftRoom';
 
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
                 <Route path="/livePlayerData" element={<LivePlayerData />} />
                 <Route path="/userLeagues" element={<UserLeagues />} />
                 <Route path="/userLeagues/:id" element={<LeagueDetail />} />
+                <Route path="/userLeagues/:id/draft" element={<DraftRoom />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-league" element={<CreateLeague />} />
                 <Route path="/profile" element={<ProfilePage />} />

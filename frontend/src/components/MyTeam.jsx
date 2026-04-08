@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 import RosterTable from './RosterTable';
 import PlayerSearch from './PlayerSearch';
@@ -8,6 +9,14 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
     const [creating, setCreating] = useState(false);
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
+    const [draftStatus, setDraftStatus] = useState(null);
+
+    useEffect(() => {
+        if (!league?.id) return;
+        api.get(`/api/draft/${league.id}`)
+            .then(res => setDraftStatus(res.data.status))
+            .catch(() => setDraftStatus(null));
+    }, [league?.id]);
 
     const showMessage = (text, error = false) => {
         setMessage(text);
@@ -80,10 +89,11 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
     }
 
     const rosterFull = team.roster.length >= league.rosterSize;
+    const draftActive = draftStatus === 'active';
+    const draftCompleted = draftStatus === 'completed';
 
     return (
         <div className="flex flex-col gap-4">
-            {/* Team header */}
             <div className="card bg-base-200 border border-base-300">
                 <div className="card-body py-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -100,7 +110,18 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
 
             <RosterTable roster={team.roster} score={score} onRemove={handleRemovePlayer} />
 
-            {!rosterFull && (
+            {draftActive && (
+                <div className="card bg-base-200 border border-base-300">
+                    <div className="card-body py-4 flex-row items-center justify-between gap-3">
+                        <p className="text-sm text-base-content/60">A draft is currently in progress.</p>
+                        <Link to={`/userLeagues/${league.id}/draft`} className="btn btn-primary btn-sm">
+                            Go to Draft Room
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {!rosterFull && !draftActive && !draftCompleted && (
                 <PlayerSearch
                     leagueId={league.id}
                     onAdd={handleAddPlayer}
