@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import RosterTable from './RosterTable';
-import PlayerSearch from './PlayerSearch';
 
 const MyTeam = ({ team, score, league, session, onTeamChange }) => {
     const [teamName, setTeamName] = useState('');
@@ -42,16 +41,6 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
         setCreating(false);
     }
 
-    async function handleAddPlayer(playerId) {
-        try {
-            await api.post(`/api/fantasy-team/${team.id}/roster`, { playerId });
-            showMessage('Player added!');
-            onTeamChange();
-        } catch (err) {
-            showMessage(err.response?.data ?? err.message, true);
-        }
-    }
-
     async function handleRemovePlayer(playerId) {
         try {
             await api.delete(`/api/fantasy-team/${team.id}/roster/${playerId}`);
@@ -66,7 +55,6 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
         return (
             <div className="card bg-base-200 border border-base-300">
                 <div className="card-body gap-4">
-                
                     <p className="text-sm text-base-content/60">You don't have a team in this league yet.</p>
                     {message && <div className={`alert ${isError ? 'alert-error' : 'alert-success'} py-2 text-sm`}>{message}</div>}
                     <form onSubmit={handleCreateTeam} className="flex gap-2">
@@ -88,9 +76,7 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
         );
     }
 
-    const rosterFull = team.roster.length >= league.rosterSize;
     const draftActive = draftStatus === 'active';
-    const draftCompleted = draftStatus === 'completed';
 
     return (
         <div className="flex flex-col gap-4">
@@ -119,13 +105,6 @@ const MyTeam = ({ team, score, league, session, onTeamChange }) => {
                         </Link>
                     </div>
                 </div>
-            )}
-
-            {!rosterFull && !draftActive && !draftCompleted && (
-                <PlayerSearch
-                    leagueId={league.id}
-                    onAdd={handleAddPlayer}
-                />
             )}
         </div>
     );

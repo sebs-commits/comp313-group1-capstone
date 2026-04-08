@@ -71,7 +71,13 @@ public class Program
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
 
-        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
+        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>(client =>
+        {
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.Add("Referer", "https://www.nba.com/");
+            client.DefaultRequestHeaders.Add("Origin", "https://www.nba.com");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+        });
 
         builder.Services.AddSignalR();
 
