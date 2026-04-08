@@ -19,6 +19,9 @@ public class AppDbContext : DbContext
     public DbSet<FantasyTeam> FantasyTeams { get; set; }
     public DbSet<FantasyRoster> FantasyRosters { get; set; }
     public DbSet<Warning> Warnings { get; set; }
+    public DbSet<DraftSession> DraftSessions { get; set; }
+    public DbSet<DraftOrder> DraftOrders { get; set; }
+    public DbSet<DraftPick> DraftPicks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +79,45 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(w => w.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DraftSession>(b =>
+        {
+            b.HasKey(ds => ds.Id);
+            b.HasOne(ds => ds.League)
+             .WithMany()
+             .HasForeignKey(ds => ds.LeagueId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DraftOrder>(b =>
+        {
+            b.HasKey(o => o.Id);
+            b.HasOne(o => o.DraftSession)
+             .WithMany(ds => ds.DraftOrder)
+             .HasForeignKey(o => o.DraftSessionId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(o => o.FantasyTeam)
+             .WithMany()
+             .HasForeignKey(o => o.FantasyTeamId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DraftPick>(b =>
+        {
+            b.HasKey(p => p.Id);
+            b.HasOne(p => p.DraftSession)
+             .WithMany(ds => ds.Picks)
+             .HasForeignKey(p => p.DraftSessionId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(p => p.FantasyTeam)
+             .WithMany()
+             .HasForeignKey(p => p.FantasyTeamId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(p => p.Player)
+             .WithMany()
+             .HasForeignKey(p => p.PlayerId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

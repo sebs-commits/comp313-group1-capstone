@@ -1,5 +1,6 @@
 
 using backend.Data;
+using backend.Hubs;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
 using backend.Services;
@@ -17,7 +18,10 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                npgsql => npgsql.CommandTimeout(300)
+            ));
         
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -69,11 +73,14 @@ public class Program
 
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
 
+        builder.Services.AddSignalR();
+
         builder.Services.AddCors(options => {
             options.AddPolicy("FrontendPolicy", policy => {
-                policy.WithOrigins("http://localhost:5173", "http://localhost:80", "http://localhost", "https://frontend.randomprojects.app")
+                policy.WithOrigins("http://localhost:5173", "http://localhost:80", "http://localhost", "https://frontend.randomprojects.app", "http://127.0.0.1:5173")
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials();
             });
         });
 
@@ -91,6 +98,7 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHub<DraftHub>("/hubs/draft");
         app.Run();
     }
 }
