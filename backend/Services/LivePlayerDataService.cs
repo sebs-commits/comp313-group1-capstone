@@ -53,6 +53,8 @@ public class LivePlayerDataService : ILivePlayerDataService
         {
             PropertyNameCaseInsensitive = true
         });
+    }
+
     public async Task<BoxScoreDto?> GetLiveBoxScoreAsync(string gameId)
     {
         var url = $"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{gameId}.json";
