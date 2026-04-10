@@ -10,11 +10,13 @@ using Microsoft.OpenApi.Models;
 using System.Net.WebSockets;
 using System.IdentityModel.Tokens.Jwt;
 
+
 namespace backend;
 
 public class Program
 {
-    public static void Main(string[] args)
+
+        public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -70,18 +72,25 @@ public class Program
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
         builder.Services.AddScoped<ILeagueChatService, LeagueChatService>();
-
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
+        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
+        builder.Services.AddSingleton<IEmailService, EmailService>();
+        builder.Services.AddHostedService<InjuryUpdateWorker>();
 
-        builder.Services.AddCors(options => {
-            options.AddPolicy("FrontendPolicy", policy => {
-                policy.WithOrigins("http://localhost:5173", "http://localhost:80", "http://localhost", "https://frontend.randomprojects.app")
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("CombinedPolicy", policy =>
+            {
+                policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:5174",
+                        "http://localhost:80",
+                        "http://localhost",
+                        "https://frontend.randomprojects.app")
                       .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials();
+                      .AllowAnyMethod();
             });
         });
-
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -90,7 +99,7 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        app.UseCors("FrontendPolicy");
+        app.UseCors("CombinedPolicy");
         
         // Enable WebSocket support
         var webSocketOptions = new WebSocketOptions
@@ -160,4 +169,5 @@ public class Program
         app.MapControllers();
         app.Run();
     }
-}
+    }
+

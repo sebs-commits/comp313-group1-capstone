@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield, MessageCircle, BarChart2} from 'lucide-react';
+import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield, MessageCircle, BarChart2, HeartPulse} from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const baseNavItems = [
@@ -11,6 +11,7 @@ const baseNavItems = [
   { path: '/join-league', label: 'Join League', icon: UserPlus },
   { path: '/create-league', label: 'Create League', icon: PlusSquare },
   { path: '/live-game-stats', label: 'Live Game Stats', icon: BarChart2 },
+  { path: '/notifications', label: 'View Health Notifications', icon: HeartPulse },
 ];
 
 const Layout = ({ children }) => {

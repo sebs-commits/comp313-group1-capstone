@@ -9,6 +9,7 @@ import CreateLeague from './pages/CreateLeague';
 import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
+import NotificationsDashboard from './pages/NotificationsDashboard';
 import LivePlayerStats from './pages/LivePlayerStats';
 import LeagueChats from './pages/LeagueChats';
 
@@ -29,6 +30,7 @@ export default function App() {
                 <Route path="/live-player-stats" element={<LivePlayerStats />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/league-chats" element={<LeagueChats />} />
+                <Route path="/notifications" element={<NotificationsDashboard />} />
             </Routes>
         </Router>
     );
