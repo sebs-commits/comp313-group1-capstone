@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 export default function LoginPage() {
@@ -108,6 +108,12 @@ export default function LoginPage() {
                 required
               />
             </fieldset>
+
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-sm link link-primary">
+                Forgot password?
+              </Link>
+            </div>
 
             {error && (
               <div role="alert" className="alert alert-error">
