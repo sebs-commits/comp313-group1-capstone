@@ -90,7 +90,7 @@ const JoinLeague = () => {
       );
 
       if (typeof data === 'object' && data?.leagueId) {
-        setTimeout(() => navigate(`/leagues/${data.leagueId}`), 600);
+        setTimeout(() => navigate(`/userleagues/${data.leagueId}`), 600);
       } else {
         setTimeout(() => navigate('/dashboard'), 600);
       }
@@ -126,7 +126,7 @@ const JoinLeague = () => {
 
       setMyLeagueIds((prev) => new Set([...prev, league.id]));
       setJoinSuccess(`Joined "${league.name}" successfully.`);
-      setTimeout(() => navigate(`/leagues/${league.id}`), 600);
+      setTimeout(() => navigate(`/userleagues/${league.id}`), 600);
     } catch (err) {
       setJoinError(err.message || 'Something went wrong.');
     } finally {

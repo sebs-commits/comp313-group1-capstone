@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
 import LivePlayerStats from './pages/LivePlayerStats';
+import LeagueChats from './pages/LeagueChats';
 
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
                 <Route path="/join-league" element={<JoinLeague />} />
                 <Route path="/live-player-stats" element={<LivePlayerStats />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/league-chats" element={<LeagueChats />} />
             </Routes>
         </Router>
     );
