@@ -38,4 +38,22 @@ public class AuthController : ControllerBase
 
         return Ok(JsonSerializer.Deserialize<object>(responseBody));
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+{
+    var supabaseUrl = _configuration["Supabase:Url"];
+    var supabaseAnonKey = _configuration["Supabase:AnonKey"];
+
+    var client = _httpClientFactory.CreateClient();
+    client.DefaultRequestHeaders.Add("apikey", supabaseAnonKey);
+
+    var payload = new { email = request.Email };
+    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+    var response = await client.PostAsync($"{supabaseUrl}/auth/v1/recover", content);
+    var responseBody = await response.Content.ReadAsStringAsync();
+
+    return StatusCode((int)response.StatusCode, JsonSerializer.Deserialize<object>(responseBody));
+}
 }
