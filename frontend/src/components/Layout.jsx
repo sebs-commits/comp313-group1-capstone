@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield, MessageCircle} from 'lucide-react';
+import {LayoutDashboard, Activity, Trophy, UserPlus, PlusSquare, User, LogOut, Menu, Shield, MessageCircle, BarChart2} from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const baseNavItems = [
