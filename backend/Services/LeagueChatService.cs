@@ -16,17 +16,14 @@ public class LeagueChatService : ILeagueChatService
 
     public async Task<LeagueChat> GetOrCreateLeagueChatAsync(int leagueId)
     {
-        System.Console.WriteLine($"🔍 GetOrCreateLeagueChatAsync called for leagueId={leagueId}");
         var leagueChat = await _context.LeagueChats
             .FirstOrDefaultAsync(lc => lc.LeagueId == leagueId);
 
         if (leagueChat != null)
         {
-            System.Console.WriteLine($"🔍 Found existing LeagueChat: ID={leagueChat.Id}, LeagueId={leagueChat.LeagueId}");
             return leagueChat;
         }
 
-        System.Console.WriteLine($"🔍 LeagueChat not found for leagueId={leagueId}, creating new one");
         leagueChat = new LeagueChat
         {
             LeagueId = leagueId,
@@ -36,39 +33,28 @@ public class LeagueChatService : ILeagueChatService
 
         _context.LeagueChats.Add(leagueChat);
         await _context.SaveChangesAsync();
-        System.Console.WriteLine($"🔍 Created new LeagueChat: ID={leagueChat.Id}, LeagueId={leagueChat.LeagueId}");
         return leagueChat;
     }
 
     public async Task<LeagueChatMessage> SendMessageAsync(int leagueId, Guid senderId, string content)
     {
-        System.Console.WriteLine($"💾 SendMessageAsync called: leagueId={leagueId}, senderId={senderId}, content='{content}' (length: {content?.Length ?? 0})");
-        
         // Get or create league chat
         var leagueChat = await GetOrCreateLeagueChatAsync(leagueId);
-
-        // Process mentions (simple implementation - replace @username with highlight)
-        var processedContent = content;
-        System.Console.WriteLine($"💾 Processed content: '{processedContent}' (length: {processedContent?.Length ?? 0})");
 
         var message = new LeagueChatMessage
         {
             LeagueChatId = leagueChat.Id,
             SenderUserId = senderId,
-            Content = processedContent,
+            Content = content,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             IsEdited = false,
             IsDeleted = false
         };
-
-        System.Console.WriteLine($"💾 Message object created: ID will be assigned, Content='{message.Content}' (length: {message.Content?.Length ?? 0})");
         
         _context.LeagueChatMessages.Add(message);
         leagueChat.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-
-        System.Console.WriteLine($"💾 Message saved to DB: ID={message.Id}, Content='{message.Content}'");
 
         return message;
     }

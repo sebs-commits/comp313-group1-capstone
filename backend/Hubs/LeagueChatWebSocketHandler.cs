@@ -25,8 +25,6 @@ public class LeagueChatWebSocketHandler
             LeagueConnections[leagueId].Add(webSocket);
         }
 
-        System.Console.WriteLine($"✓ WebSocket connected for league {leagueId}, user {userId}. Connected count: {LeagueConnections[leagueId].Count}");
-
         try
         {
             var buffer = new byte[1024 * 4];
@@ -36,7 +34,6 @@ public class LeagueChatWebSocketHandler
             while (!result.CloseStatus.HasValue)
             {
                 var messageText = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                System.Console.WriteLine($"📨 Received from league {leagueId}: {messageText}");
 
                 try
                 {
@@ -45,8 +42,6 @@ public class LeagueChatWebSocketHandler
 
                     if (wsInput?.Type == "message" && wsInput?.Content != null)
                     {
-                        System.Console.WriteLine($"💬 Processing chat message: '{wsInput.Content}'");
-
                         using (var scope = serviceProvider.CreateScope())
                         {
                             var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
@@ -56,13 +51,11 @@ public class LeagueChatWebSocketHandler
                             var profile = await dbContext.Profiles.FirstOrDefaultAsync(p => p.Id == userId);
                             var senderUsername = profile?.Username ?? "Unknown";
 
-                            await BroadcastMessageAsync(leagueId, savedMessage, senderUsername, webSocket);
+                            await BroadcastMessageAsync(leagueId, savedMessage, senderUsername);
                         }
                     }
                     else if (wsInput?.Type == "reaction" && wsInput?.MessageId > 0 && wsInput?.Emoji != null)
                     {
-                        System.Console.WriteLine($"😊 Processing reaction: messageId={wsInput.MessageId}, emoji={wsInput.Emoji}, action={wsInput.Action}");
-
                         using (var scope = serviceProvider.CreateScope())
                         {
                             var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
@@ -82,7 +75,7 @@ public class LeagueChatWebSocketHandler
                             var username = profile?.Username ?? "Unknown";
 
                             // Broadcast reaction change to all connected clients
-                            await BroadcastReactionAsync(leagueId, wsInput.MessageId, wsInput.Emoji, username, userId, wsInput.Action, webSocket);
+                            await BroadcastReactionAsync(leagueId, wsInput.MessageId, wsInput.Emoji, username, userId, wsInput.Action);
                         }
                     }
                     else if (wsInput?.Type == "edit" && wsInput?.MessageId > 0)
@@ -92,7 +85,7 @@ public class LeagueChatWebSocketHandler
                             var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
                             var editedMessage = await leagueChatService.EditMessageAsync(wsInput.MessageId, userId, wsInput.Content);
 
-                            await BroadcastEditAsync(leagueId, editedMessage, webSocket);
+                            await BroadcastEditAsync(leagueId, editedMessage);
                         }
                     }
                     else if (wsInput?.Type == "delete" && wsInput?.MessageId > 0)
@@ -102,13 +95,12 @@ public class LeagueChatWebSocketHandler
                             var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
                             await leagueChatService.DeleteMessageAsync(wsInput.MessageId, userId);
 
-                            await BroadcastDeleteAsync(leagueId, wsInput.MessageId, webSocket);
+                            await BroadcastDeleteAsync(leagueId, wsInput.MessageId);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Console.WriteLine($"✗ Error processing WebSocket message: {ex}");
                     await SendErrorAsync(webSocket, ex.Message);
                 }
 
@@ -124,8 +116,6 @@ public class LeagueChatWebSocketHandler
             lock (LockObj)
             {
                 LeagueConnections[leagueId].Remove(webSocket);
-                System.Console.WriteLine($"✗ WebSocket disconnected for league {leagueId}. Remaining connections: {LeagueConnections[leagueId].Count}");
-
                 if (LeagueConnections[leagueId].Count == 0)
                 {
                     LeagueConnections.Remove(leagueId);
@@ -135,10 +125,8 @@ public class LeagueChatWebSocketHandler
         }
     }
 
-    private static async Task BroadcastMessageAsync(int leagueId, LeagueChatMessage message, string senderUsername, WebSocket senderSocket)
+    private static Task BroadcastMessageAsync(int leagueId, LeagueChatMessage message, string senderUsername)
     {
-        System.Console.WriteLine($"📤 Broadcasting message ID {message.Id}: '{message.Content}' from {senderUsername}");
-
         // Format reactions
         var reactions = message.Reactions != null
             ? message.Reactions.Select(r => (object)new
@@ -171,14 +159,12 @@ public class LeagueChatWebSocketHandler
 
         var json = JsonSerializer.Serialize(responseDto);
         var bytes = Encoding.UTF8.GetBytes(json);
-        System.Console.WriteLine($"📤 Broadcast JSON: {json}");
 
         lock (LockObj)
         {
             if (LeagueConnections.ContainsKey(leagueId))
             {
                 var deadSockets = new List<WebSocket>();
-                int sentCount = 0;
 
                 foreach (var socket in LeagueConnections[leagueId])
                 {
@@ -191,34 +177,26 @@ public class LeagueChatWebSocketHandler
                                 WebSocketMessageType.Text,
                                 true,
                                 CancellationToken.None).Wait();
-                            sentCount++;
-                            System.Console.WriteLine($"✓ Sent to client");
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            System.Console.WriteLine($"✗ Failed to send to client: {ex.Message}");
                             deadSockets.Add(socket);
                         }
                     }
                     else
                     {
-                        System.Console.WriteLine($"⚠ Socket not open, state: {socket.State}");
                         deadSockets.Add(socket);
                     }
                 }
-
-                System.Console.WriteLine($"✓ Broadcast complete: sent to {sentCount}/{LeagueConnections[leagueId].Count} clients");
 
                 foreach (var deadSocket in deadSockets)
                 {
                     LeagueConnections[leagueId].Remove(deadSocket);
                 }
             }
-            else
-            {
-                System.Console.WriteLine($"⚠ No connections for league {leagueId}");
-            }
         }
+
+        return Task.CompletedTask;
     }
 
     private static async Task SendErrorAsync(WebSocket webSocket, string errorMessage)
@@ -242,10 +220,8 @@ public class LeagueChatWebSocketHandler
         }
     }
 
-    private static async Task BroadcastReactionAsync(int leagueId, int messageId, string emoji, string username, Guid userId, string action, WebSocket senderSocket)
+    private static Task BroadcastReactionAsync(int leagueId, int messageId, string emoji, string username, Guid userId, string action)
     {
-        System.Console.WriteLine($"😊 Broadcasting reaction: messageId={messageId}, emoji={emoji}, username={username}, action={action}");
-
         var responseDto = new
         {
             type = "reaction",
@@ -279,9 +255,11 @@ public class LeagueChatWebSocketHandler
                 }
             }
         }
+
+        return Task.CompletedTask;
     }
 
-    private static async Task BroadcastEditAsync(int leagueId, LeagueChatMessage message, WebSocket senderSocket)
+    private static Task BroadcastEditAsync(int leagueId, LeagueChatMessage message)
     {
         var responseDto = new
         {
@@ -315,9 +293,11 @@ public class LeagueChatWebSocketHandler
                 }
             }
         }
+
+        return Task.CompletedTask;
     }
 
-    private static async Task BroadcastDeleteAsync(int leagueId, int messageId, WebSocket senderSocket)
+    private static Task BroadcastDeleteAsync(int leagueId, int messageId)
     {
         var responseDto = new
         {
@@ -348,6 +328,8 @@ public class LeagueChatWebSocketHandler
                 }
             }
         }
+
+        return Task.CompletedTask;
     }
 
     public class WebSocketInput
@@ -366,11 +348,5 @@ public class LeagueChatWebSocketHandler
 
         [JsonPropertyName("action")]
         public string Action { get; set; } = string.Empty; // "add" or "remove" for reactions
-    }
-
-    public class ChatMessageInput
-    {
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
     }
 }

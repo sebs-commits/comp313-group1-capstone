@@ -128,18 +128,14 @@ public class Program
                                 userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            System.Console.WriteLine($"Error extracting token: {ex.Message}");
                         }
                     }
-
-                    System.Console.WriteLine($"WebSocket auth attempt - LeagueId: {leagueIdStr}, UserId: {userIdStr}");
 
                     if (!string.IsNullOrEmpty(leagueIdStr) && int.TryParse(leagueIdStr, out var leagueId) &&
                         !string.IsNullOrEmpty(userIdStr) && Guid.TryParse(userIdStr, out var userId))
                     {
-                        System.Console.WriteLine($"✓ WebSocket auth successful - LeagueId: {leagueId}, UserId: {userId}");
                         using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
                         {
                             await LeagueChatWebSocketHandler.HandleWebSocketAsync(webSocket, leagueId, userId, context.RequestServices);
@@ -147,7 +143,6 @@ public class Program
                     }
                     else
                     {
-                        System.Console.WriteLine($"✗ WebSocket auth failed - Invalid leagueId or userId");
                         context.Response.StatusCode = 400;
                         await context.Response.WriteAsync("Invalid leagueId or userId");
                     }

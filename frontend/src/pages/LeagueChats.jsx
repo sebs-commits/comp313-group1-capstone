@@ -136,7 +136,6 @@ const LeagueChats = () => {
 
         setLoading(false);
       } catch (err) {
-        console.error('Error initializing chat:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -163,7 +162,6 @@ const LeagueChats = () => {
         );
 
         if (!historyRes.ok) {
-          console.error('Failed to load chat history');
           setMessages([]);
           return;
         }
@@ -182,8 +180,8 @@ const LeagueChats = () => {
 
         // Connect to WebSocket
         connectWebSocket(selectedLeagueId, session.access_token);
-      } catch (err) {
-        console.error('Error loading chat history:', err);
+      } catch {
+        setMessages([]);
       }
     };
 
@@ -224,24 +222,15 @@ const LeagueChats = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const apiHost = import.meta.env.VITE_API_URL.split('//')[1];
       const wsUrl = `${protocol}//${apiHost}/ws/league-chat?leagueId=${leagueId}&token=${encodeURIComponent(token)}`;
-      
-      console.log('Attempting to connect to:', wsUrl);
+
       ws.current = new WebSocket(wsUrl);
 
-      ws.current.onopen = () => {
-        console.log('✓ WebSocket connected successfully');
-        console.log('WebSocket ready state:', ws.current.readyState);
-      };
-
       ws.current.onmessage = (event) => {
-        console.log('📨 Raw message received:', event.data);
         try {
           const data = JSON.parse(event.data);
-          console.log('📨 Parsed message:', data);
           
           if (data.type === 'message') {
             const senderUsername = data.data.senderUsername || 'Unknown';
-            console.log('💬 Adding new message from:', senderUsername);
             
             setUserProfiles(prev => ({
               ...prev,
@@ -252,7 +241,6 @@ const LeagueChats = () => {
             setMessages(prev => {
               const messageExists = prev.some(m => m.id === data.data.id);
               if (messageExists) {
-                console.log('⚠️ Message already exists, skipping:', data.data.id);
                 return prev;
               }
               
@@ -268,14 +256,10 @@ const LeagueChats = () => {
                 isDeleted: data.data.isDeleted,
                 reactions: data.data.reactions || []
               };
-              
-              console.log('✓ New message added:', newMsg);
-              console.log('Message content check - ID:', newMsg.id, 'Content length:', newMsg.content?.length, 'Content value:', newMsg.content);
+ 
               return [...prev, newMsg];
             });
           } else if (data.type === 'reaction') {
-            console.log('😊 Reaction update:', data.data);
-            
             setMessages(prev => prev.map(msg => {
               if (msg.id !== data.data.messageId) return msg;
 
@@ -285,7 +269,6 @@ const LeagueChats = () => {
                 );
                 
                 if (alreadyExists) {
-                  console.log('⚠️ Reaction already exists');
                   return msg;
                 }
 
@@ -327,24 +310,17 @@ const LeagueChats = () => {
           } else if (data.type === 'delete') {
             setMessages((prev) => prev.filter((msg) => msg.id !== data.data.messageId));
           } else if (data.type === 'error') {
-            console.error('❌ Chat error:', data.message);
             setError(data.message);
           }
-        } catch (err) {
-          console.error('❌ Error parsing WebSocket message:', err, 'Raw data:', event.data);
+        } catch {
+          setError('Received an invalid chat message');
         }
       };
 
-      ws.current.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
+      ws.current.onerror = () => {
         setError('WebSocket connection failed');
       };
-
-      ws.current.onclose = () => {
-        console.log('⚠️ WebSocket disconnected');
-      };
-    } catch (err) {
-      console.error('❌ Error connecting to WebSocket:', err);
+    } catch {
       setError('Failed to connect to chat');
     }
   };
@@ -357,18 +333,13 @@ const LeagueChats = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const messageContent = newMessage;
 
-      console.log('📤 Sending message:', messageContent);
-      console.log('📊 WebSocket state:', ws.current?.readyState, 'OPEN=', WebSocket.OPEN);
-
       // Send via WebSocket if connected
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        console.log('✓ Sending via WebSocket...');
         ws.current.send(JSON.stringify({ type: 'message', content: messageContent }));
         setNewMessage('');
         setMentionDropdownOpen(false);
         setError('');
       } else {
-        console.log('⚠️ WebSocket not ready, using HTTP fallback...');
         // Fallback to HTTP POST
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/api/league-chat/${selectedLeagueId}/message`,
@@ -383,7 +354,6 @@ const LeagueChats = () => {
         );
 
         if (res.ok) {
-          console.log('✓ Message sent via HTTP');
           setNewMessage('');
           setMentionDropdownOpen(false);
           setError('');
@@ -403,12 +373,10 @@ const LeagueChats = () => {
             setMessages(historyData.messages);
           }
         } else {
-          console.error('❌ HTTP message failed:', res.status);
           setError('Failed to send message');
         }
       }
-    } catch (err) {
-      console.error('❌ Error sending message:', err);
+    } catch {
       setError('Failed to send message');
     }
   };
@@ -464,8 +432,7 @@ const LeagueChats = () => {
 
       handleCancelEdit();
       setError('');
-    } catch (err) {
-      console.error('❌ Error editing message:', err);
+    } catch {
       setError('Failed to edit message');
     }
   };
@@ -495,8 +462,7 @@ const LeagueChats = () => {
       }
 
       setError('');
-    } catch (err) {
-      console.error('❌ Error deleting message:', err);
+    } catch {
       setError('Failed to delete message');
     }
   };
@@ -574,7 +540,6 @@ const LeagueChats = () => {
 
       // Send via WebSocket if available
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        console.log(`📤 Sending reaction via WebSocket: messageId=${messageId}, emoji=${emoji}, action=${action}`);
         ws.current.send(JSON.stringify({
           type: 'reaction',
           messageId: messageId,
@@ -583,7 +548,6 @@ const LeagueChats = () => {
         }));
       } else {
         // Fallback to HTTP
-        console.log(`📤 WebSocket not ready, using HTTP fallback for reaction`);
         const endpoint = userReaction
           ? `${import.meta.env.VITE_API_URL}/api/league-chat/message/${messageId}/reaction?emoji=${encodeURIComponent(emoji)}`
           : `${import.meta.env.VITE_API_URL}/api/league-chat/message/${messageId}/reaction`;
@@ -599,12 +563,10 @@ const LeagueChats = () => {
         });
 
         if (!res.ok) {
-          console.error('❌ HTTP reaction failed:', res.status);
           setError('Failed to add reaction');
         }
       }
-    } catch (err) {
-      console.error('❌ Error toggling reaction:', err);
+    } catch {
       setError('Failed to toggle reaction');
     }
   };
