@@ -9,6 +9,7 @@ import CreateLeague from './pages/CreateLeague';
 import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
+import LeagueChats from './pages/LeagueChats';
 
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/join-league" element={<JoinLeague />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/league-chats" element={<LeagueChats />} />
             </Routes>
         </Router>
     );
