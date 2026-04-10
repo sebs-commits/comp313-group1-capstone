@@ -85,6 +85,26 @@ public class LeagueChatWebSocketHandler
                             await BroadcastReactionAsync(leagueId, wsInput.MessageId, wsInput.Emoji, username, userId, wsInput.Action, webSocket);
                         }
                     }
+                    else if (wsInput?.Type == "edit" && wsInput?.MessageId > 0)
+                    {
+                        using (var scope = serviceProvider.CreateScope())
+                        {
+                            var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
+                            var editedMessage = await leagueChatService.EditMessageAsync(wsInput.MessageId, userId, wsInput.Content);
+
+                            await BroadcastEditAsync(leagueId, editedMessage, webSocket);
+                        }
+                    }
+                    else if (wsInput?.Type == "delete" && wsInput?.MessageId > 0)
+                    {
+                        using (var scope = serviceProvider.CreateScope())
+                        {
+                            var leagueChatService = scope.ServiceProvider.GetRequiredService<ILeagueChatService>();
+                            await leagueChatService.DeleteMessageAsync(wsInput.MessageId, userId);
+
+                            await BroadcastDeleteAsync(leagueId, wsInput.MessageId, webSocket);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -261,16 +281,85 @@ public class LeagueChatWebSocketHandler
         }
     }
 
+    private static async Task BroadcastEditAsync(int leagueId, LeagueChatMessage message, WebSocket senderSocket)
+    {
+        var responseDto = new
+        {
+            type = "edit",
+            data = new
+            {
+                id = message.Id,
+                content = message.Content,
+                updatedAt = message.UpdatedAt,
+                isEdited = message.IsEdited
+            }
+        };
+
+        var json = JsonSerializer.Serialize(responseDto);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        lock (LockObj)
+        {
+            if (LeagueConnections.ContainsKey(leagueId))
+            {
+                foreach (var socket in LeagueConnections[leagueId])
+                {
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        socket.SendAsync(
+                            new ArraySegment<byte>(bytes),
+                            WebSocketMessageType.Text,
+                            true,
+                            CancellationToken.None).GetAwaiter().GetResult();
+                    }
+                }
+            }
+        }
+    }
+
+    private static async Task BroadcastDeleteAsync(int leagueId, int messageId, WebSocket senderSocket)
+    {
+        var responseDto = new
+        {
+            type = "delete",
+            data = new
+            {
+                messageId = messageId
+            }
+        };
+
+        var json = JsonSerializer.Serialize(responseDto);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        lock (LockObj)
+        {
+            if (LeagueConnections.ContainsKey(leagueId))
+            {
+                foreach (var socket in LeagueConnections[leagueId])
+                {
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        socket.SendAsync(
+                            new ArraySegment<byte>(bytes),
+                            WebSocketMessageType.Text,
+                            true,
+                            CancellationToken.None).GetAwaiter().GetResult();
+                    }
+                }
+            }
+        }
+    }
+
     public class WebSocketInput
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; } = string.Empty; // "message" or "reaction"
+        public string Type { get; set; } = string.Empty; // "message", "reaction", "edit", "delete"
 
         [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty; // For message type
+        public string Content { get; set; } = string.Empty; // For message and edit types
 
         [JsonPropertyName("messageId")]
-        public int MessageId { get; set; } // For reaction type
+        public int MessageId { get; set; } // For reaction, edit, and delete types
 
         [JsonPropertyName("emoji")]
         public string Emoji { get; set; } = string.Empty; // For reaction type
