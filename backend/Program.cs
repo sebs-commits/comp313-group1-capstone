@@ -2,16 +2,21 @@ using backend.Data;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
 using backend.Services;
+using backend.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Net.WebSockets;
+using System.IdentityModel.Tokens.Jwt;
+
 
 namespace backend;
 
 public class Program
 {
-    public static void Main(string[] args)
+
+        public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +42,7 @@ public class Program
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+
         builder.Services.AddSwaggerGen(options =>
         {
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -65,6 +71,8 @@ public class Program
 
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
+        builder.Services.AddScoped<ILeagueChatService, LeagueChatService>();
+        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
         builder.Services.AddSingleton<IEmailService, EmailService>();
         builder.Services.AddHostedService<InjuryUpdateWorker>();
@@ -83,7 +91,6 @@ public class Program
                       .AllowAnyMethod();
             });
         });
-
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -92,16 +99,75 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection();
-        app.UseRouting();
-
         app.UseCors("CombinedPolicy");
+        
+        // Enable WebSocket support
+        var webSocketOptions = new WebSocketOptions
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(2)
+        };
+        app.UseWebSockets(webSocketOptions);
 
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapControllers();
+        // WebSocket middleware for league chat
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Path.StartsWithSegments("/ws/league-chat"))
+            {
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    var leagueIdStr = context.Request.Query["leagueId"].ToString();
+                    var tokenStr = context.Request.Query["token"].ToString();
 
+                    // Extract userId from JWT token if provided
+                    var userIdStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    
+                    if (string.IsNullOrEmpty(userIdStr) && !string.IsNullOrEmpty(tokenStr))
+                    {
+                        try
+                        {
+                            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                            var jwtToken = tokenHandler.ReadToken(tokenStr) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+                            if (jwtToken != null)
+                            {
+                                userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(leagueIdStr) && int.TryParse(leagueIdStr, out var leagueId) &&
+                        !string.IsNullOrEmpty(userIdStr) && Guid.TryParse(userIdStr, out var userId))
+                    {
+                        using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
+                        {
+                            await LeagueChatWebSocketHandler.HandleWebSocketAsync(webSocket, leagueId, userId, context.RequestServices);
+                        }
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync("Invalid leagueId or userId");
+                    }
+                }
+                else
+                {
+                    context.Response.StatusCode = 400;
+                    await context.Response.WriteAsync("Expected WebSocket request");
+                }
+            }
+            else
+            {
+                await next(context);
+            }
+        });
+
+        app.MapControllers();
         app.Run();
     }
-}
+    }
+

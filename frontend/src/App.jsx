@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LivePlayerData from './pages/LivePlayerData';
+import LiveGameData from './pages/LiveGameData';
 import UserLeagues from './pages/UserLeagues';
 import LeagueDetail from './pages/LeagueDetail';
 import LoginPage from './pages/LoginPage';
@@ -10,6 +10,9 @@ import ProfilePage from './pages/ProfilePage';
 import JoinLeague from './pages/JoinLeague';
 import AdminPage from './pages/AdminPage';
 import NotificationsDashboard from './pages/NotificationsDashboard';
+import LivePlayerStats from './pages/LivePlayerStats';
+import LeagueChats from './pages/LeagueChats';
+
 
 export default function App() {
     return (
@@ -17,13 +20,17 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/livePlayerData" element={<LivePlayerData />} />
+                <Route path="/live-game-stats" element={<LiveGameData />} />
                 <Route path="/userLeagues" element={<UserLeagues />} />
                 <Route path="/userLeagues/:id" element={<LeagueDetail />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create-league" element={<CreateLeague />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/join-league" element={<JoinLeague />} />
+                <Route path="/live-player-stats" element={<LivePlayerStats />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/league-chats" element={<LeagueChats />} />
+                <Route path="/notifications" element={<NotificationsDashboard />} />
             </Routes>
         </Router>
     );
