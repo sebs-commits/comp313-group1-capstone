@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import LeagueInfo from '../components/LeagueInfo';
 import MyTeam from '../components/MyTeam';
 import Leaderboard from '../components/Leaderboard';
+import { Users } from 'lucide-react';
 
 const LeagueDetail = () => {
     const { id } = useParams();
@@ -40,6 +41,12 @@ const LeagueDetail = () => {
                     >
                         <ArrowRightLeft size={18} />
                         Manage Trades
+                    </Link>
+                </div>
+
+                <div className="flex justify-end">
+                    <Link to={`/userLeagues/${id}/draft`} className="btn btn-primary btn-sm gap-2">
+                        <Users size={14} /> Draft Room
                     </Link>
                 </div>
 

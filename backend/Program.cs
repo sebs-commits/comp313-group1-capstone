@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Hubs;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
 using backend.Services;
@@ -79,10 +80,18 @@ public class Program
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
         builder.Services.AddScoped<ILeagueChatService, LeagueChatService>();
-        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
-        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>();
         builder.Services.AddSingleton<IEmailService, EmailService>();
         builder.Services.AddHostedService<InjuryUpdateWorker>();
+
+        builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>(client =>
+        {
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.Add("Referer", "https://www.nba.com/");
+            client.DefaultRequestHeaders.Add("Origin", "https://www.nba.com");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+        });
+
+        builder.Services.AddSignalR();
 
         builder.Services.AddCors(options =>
         {
@@ -93,9 +102,11 @@ public class Program
                         "http://localhost:5174",
                         "http://localhost:80",
                         "http://localhost",
-                        "https://frontend.randomprojects.app")
+                        "https://frontend.randomprojects.app",
+                        "http://127.0.0.1:5173")
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials();
             });
         });
         var app = builder.Build();
@@ -174,6 +185,7 @@ public class Program
         });
 
         app.MapControllers();
+        app.MapHub<DraftHub>("/hubs/draft");
         app.Run();
     }
     }

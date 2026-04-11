@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408214010_AddDraftTables")]
+    partial class AddDraftTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -177,68 +180,6 @@ namespace backend.Migrations
                     b.ToTable("fantasy_teams");
                 });
 
-            modelBuilder.Entity("backend.Models.LeagueChat", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("LeagueId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeagueId")
-                        .IsUnique();
-
-                    b.ToTable("league_chats");
-                });
-
-            modelBuilder.Entity("backend.Models.LeagueChatMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsEdited")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LeagueChatId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SenderUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeagueChatId");
-
-                    b.ToTable("league_chat_messages");
-                });
-
             modelBuilder.Entity("backend.Models.LeagueMember", b =>
                 {
                     b.Property<int>("Id")
@@ -266,35 +207,6 @@ namespace backend.Migrations
                         .IsUnique();
 
                     b.ToTable("LeagueMembers");
-                });
-
-            modelBuilder.Entity("backend.Models.MessageReaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Emoji")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MessageId", "UserId", "Emoji")
-                        .IsUnique();
-
-                    b.ToTable("message_reactions");
                 });
 
             modelBuilder.Entity("backend.Models.NbaGame", b =>
@@ -631,78 +543,6 @@ namespace backend.Migrations
                     b.ToTable("profiles");
                 });
 
-            modelBuilder.Entity("backend.Models.Trade", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("InitiatingTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LeagueId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ReceivingTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeagueId");
-
-                    b.HasIndex("InitiatingTeamId", "Status");
-
-                    b.HasIndex("ReceivingTeamId", "Status");
-
-                    b.ToTable("trades");
-                });
-
-            modelBuilder.Entity("backend.Models.TradeItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("OfferingTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PlayerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TradeId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfferingTeamId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.HasIndex("TradeId");
-
-                    b.ToTable("trade_items");
-                });
-
             modelBuilder.Entity("backend.Models.Warning", b =>
                 {
                     b.Property<Guid>("Id")
@@ -817,28 +657,6 @@ namespace backend.Migrations
                     b.Navigation("League");
                 });
 
-            modelBuilder.Entity("backend.Models.LeagueChat", b =>
-                {
-                    b.HasOne("backend.Models.NbaLeague", "League")
-                        .WithMany()
-                        .HasForeignKey("LeagueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("League");
-                });
-
-            modelBuilder.Entity("backend.Models.LeagueChatMessage", b =>
-                {
-                    b.HasOne("backend.Models.LeagueChat", "LeagueChat")
-                        .WithMany("Messages")
-                        .HasForeignKey("LeagueChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("LeagueChat");
-                });
-
             modelBuilder.Entity("backend.Models.LeagueMember", b =>
                 {
                     b.HasOne("backend.Models.NbaLeague", "League")
@@ -848,17 +666,6 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("League");
-                });
-
-            modelBuilder.Entity("backend.Models.MessageReaction", b =>
-                {
-                    b.HasOne("backend.Models.LeagueChatMessage", "Message")
-                        .WithMany("Reactions")
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
                 });
 
             modelBuilder.Entity("backend.Models.NbaGame", b =>
@@ -910,60 +717,6 @@ namespace backend.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("backend.Models.Trade", b =>
-                {
-                    b.HasOne("backend.Models.FantasyTeam", "InitiatingTeam")
-                        .WithMany()
-                        .HasForeignKey("InitiatingTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.NbaLeague", "League")
-                        .WithMany()
-                        .HasForeignKey("LeagueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.FantasyTeam", "ReceivingTeam")
-                        .WithMany()
-                        .HasForeignKey("ReceivingTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("InitiatingTeam");
-
-                    b.Navigation("League");
-
-                    b.Navigation("ReceivingTeam");
-                });
-
-            modelBuilder.Entity("backend.Models.TradeItem", b =>
-                {
-                    b.HasOne("backend.Models.FantasyTeam", "OfferingTeam")
-                        .WithMany()
-                        .HasForeignKey("OfferingTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.NbaPlayer", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Trade", "Trade")
-                        .WithMany("Items")
-                        .HasForeignKey("TradeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OfferingTeam");
-
-                    b.Navigation("Player");
-
-                    b.Navigation("Trade");
-                });
-
             modelBuilder.Entity("backend.Models.Warning", b =>
                 {
                     b.HasOne("backend.Models.Profile", "User")
@@ -987,26 +740,11 @@ namespace backend.Migrations
                     b.Navigation("Roster");
                 });
 
-            modelBuilder.Entity("backend.Models.LeagueChat", b =>
-                {
-                    b.Navigation("Messages");
-                });
-
-            modelBuilder.Entity("backend.Models.LeagueChatMessage", b =>
-                {
-                    b.Navigation("Reactions");
-                });
-
             modelBuilder.Entity("backend.Models.NbaLeague", b =>
                 {
                     b.Navigation("Members");
 
                     b.Navigation("Teams");
-                });
-
-            modelBuilder.Entity("backend.Models.Trade", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

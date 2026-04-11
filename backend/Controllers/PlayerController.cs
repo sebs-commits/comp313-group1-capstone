@@ -11,10 +11,12 @@ namespace backend.Controllers;
 public class PlayerController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ILivePlayerDataService _nba;
 
-    public PlayerController(AppDbContext context)
+    public PlayerController(AppDbContext context, ILivePlayerDataService nba)
     {
         _context = context;
+        _nba = nba;
     }
 
     // GET /api/player/teams/{leagueId}
@@ -95,6 +97,72 @@ public class PlayerController : ControllerBase
                 JerseyNumber = p.JerseyNumber
             })
             .ToListAsync();
+
+        return Ok(players);
+    }
+
+    // GET /api/player/nba-teams
+    // Returns all current NBA teams. Tries stats.nba.com first; falls back to the DB.
+    [HttpGet("nba-teams")]
+    public async Task<ActionResult<List<TeamDto>>> GetNbaTeams()
+    {
+        var teams = await _nba.GetAllTeamsAsync();
+
+        if (!teams.Any())
+        {
+            teams = await _context.NbaTeams
+                .OrderBy(t => t.FullName)
+                .Select(t => new TeamDto
+                {
+                    TeamId = t.TeamId,
+                    FullName = t.FullName,
+                    Abbreviation = t.Abbreviation
+                })
+                .ToListAsync();
+        }
+
+        return Ok(teams);
+    }
+
+    // GET /api/player/nba-roster/{teamId}?leagueId=X
+    // Returns the current roster for an NBA team. Tries stats.nba.com first; falls back to the DB.
+    // Already-drafted players for the given league are excluded.
+    [HttpGet("nba-roster/{teamId:int}")]
+    public async Task<ActionResult<List<PlayerDto>>> GetNbaRoster(int teamId, [FromQuery] int leagueId)
+    {
+        var players = await _nba.GetTeamRosterAsync(teamId);
+
+        if (!players.Any())
+        {
+            players = await _context.NbaPlayers
+                .Include(p => p.Team)
+                .Where(p => p.IsActive && p.TeamId == teamId)
+                .OrderBy(p => p.FullName)
+                .Select(p => new PlayerDto
+                {
+                    PlayerId = p.PlayerId,
+                    FullName = p.FullName,
+                    Position = p.Position,
+                    JerseyNumber = p.JerseyNumber,
+                    TeamName = p.Team != null ? p.Team.FullName : null,
+                    TeamAbbreviation = p.Team != null ? p.Team.Abbreviation : null
+                })
+                .ToListAsync();
+        }
+
+        if (players.Any())
+        {
+            var league = await _context.Leagues.FindAsync(leagueId);
+            if (league is not null && league.UniqueRosters)
+            {
+                var draftedIds = await _context.FantasyRosters
+                    .Where(fr => fr.FantasyTeam!.LeagueId == leagueId)
+                    .Select(fr => fr.PlayerId)
+                    .ToListAsync();
+
+                players = players.Where(p => !draftedIds.Contains(p.PlayerId)).ToList();
+            }
+        }
 
         return Ok(players);
     }
