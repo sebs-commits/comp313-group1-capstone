@@ -73,49 +73,60 @@ public class LivePlayerDataService : ILivePlayerDataService
 
     public async Task<List<TeamDto>> GetAllTeamsAsync()
     {
-        var season = GetCurrentSeason();
-        var url = $"https://stats.nba.com/stats/commonteamslist?LeagueID=00&Season={season}";
-        var response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode) return new List<TeamDto>();
-
-        var json = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
-
-        var resultSets = doc.RootElement.GetProperty("resultSets");
-        var teamListSet = resultSets.EnumerateArray()
-            .FirstOrDefault(rs => rs.GetProperty("name").GetString() == "CommonTeamList");
-
-        if (teamListSet.ValueKind == JsonValueKind.Undefined)
-            return new List<TeamDto>();
-
-        var headers = teamListSet.GetProperty("headers").EnumerateArray()
-            .Select(h => h.GetString()).ToList();
-
-        int teamIdIdx    = headers.IndexOf("TEAM_ID");
-        int abbrevIdx    = headers.IndexOf("ABBREVIATION");
-        int nicknameIdx  = headers.IndexOf("NICKNAME");
-        int cityIdx      = headers.IndexOf("CITY");
-
-        var teams = new List<TeamDto>();
-        foreach (var row in teamListSet.GetProperty("rowSet").EnumerateArray())
+        try
         {
-            var cols = row.EnumerateArray().ToList();
-            teams.Add(new TeamDto
-            {
-                TeamId       = cols[teamIdIdx].GetInt32(),
-                FullName     = $"{cols[cityIdx].GetString()} {cols[nicknameIdx].GetString()}",
-                Abbreviation = cols[abbrevIdx].GetString()
-            });
-        }
+            var season = GetCurrentSeason();
+            var url = $"https://stats.nba.com/stats/commonteamslist?LeagueID=00&Season={season}";
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var response = await _httpClient.GetAsync(url, cts.Token);
+            if (!response.IsSuccessStatusCode) return new List<TeamDto>();
 
-        return teams.OrderBy(t => t.FullName).ToList();
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            var resultSets = doc.RootElement.GetProperty("resultSets");
+            var teamListSet = resultSets.EnumerateArray()
+                .FirstOrDefault(rs => rs.GetProperty("name").GetString() == "CommonTeamList");
+
+            if (teamListSet.ValueKind == JsonValueKind.Undefined)
+                return new List<TeamDto>();
+
+            var headers = teamListSet.GetProperty("headers").EnumerateArray()
+                .Select(h => h.GetString()).ToList();
+
+            int teamIdIdx    = headers.IndexOf("TEAM_ID");
+            int abbrevIdx    = headers.IndexOf("ABBREVIATION");
+            int nicknameIdx  = headers.IndexOf("NICKNAME");
+            int cityIdx      = headers.IndexOf("CITY");
+
+            var teams = new List<TeamDto>();
+            foreach (var row in teamListSet.GetProperty("rowSet").EnumerateArray())
+            {
+                var cols = row.EnumerateArray().ToList();
+                teams.Add(new TeamDto
+                {
+                    TeamId       = cols[teamIdIdx].GetInt32(),
+                    FullName     = $"{cols[cityIdx].GetString()} {cols[nicknameIdx].GetString()}",
+                    Abbreviation = cols[abbrevIdx].GetString()
+                });
+            }
+
+            return teams.OrderBy(t => t.FullName).ToList();
+        }
+        catch
+        {
+            return new List<TeamDto>();
+        }
     }
 
     public async Task<List<PlayerDto>> GetTeamRosterAsync(int teamId)
     {
+        try
+        {
         var season = GetCurrentSeason();
         var url = $"https://stats.nba.com/stats/commonteamroster?TeamID={teamId}&Season={season}";
-        var response = await _httpClient.GetAsync(url);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var response = await _httpClient.GetAsync(url, cts.Token);
         if (!response.IsSuccessStatusCode) return new List<PlayerDto>();
 
         var json = await response.Content.ReadAsStringAsync();
@@ -150,6 +161,11 @@ public class LivePlayerDataService : ILivePlayerDataService
         }
 
         return players.OrderBy(p => p.FullName).ToList();
+        }
+        catch
+        {
+            return new List<PlayerDto>();
+        }
     }
 
     private static string GetCurrentSeason()
