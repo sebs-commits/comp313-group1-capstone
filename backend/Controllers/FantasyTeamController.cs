@@ -120,6 +120,14 @@ public class FantasyTeamController : ControllerBase
             return NotFound("Team not found.");
         }
 
+        var draftSession = await _context.DraftSessions
+            .FirstOrDefaultAsync(ds => ds.LeagueId == team.LeagueId);
+
+        if (draftSession is not null && (draftSession.Status == "active" || draftSession.Status == "completed"))
+        {
+            return BadRequest("Players can only be added through the draft room.");
+        }
+
         if (team.Roster.Count >= team.League!.RosterSize)
         {
             return BadRequest($"Roster is full. Maximum size is {team.League.RosterSize}.");
