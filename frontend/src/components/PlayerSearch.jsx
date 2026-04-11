@@ -3,14 +3,17 @@ import api from '../api';
 
 const PlayerSearch = ({ leagueId, onAdd }) => {
     const [teams, setTeams] = useState([]);
+    const [teamsLoading, setTeamsLoading] = useState(true);
     const [selectedTeamId, setSelectedTeamId] = useState('');
     const [players, setPlayers] = useState([]);
+    const [playersLoading, setPlayersLoading] = useState(false);
 
     useEffect(() => {
-        api.get(`/api/player/teams/${leagueId}`)
+        api.get('/api/player/nba-teams')
             .then(res => setTeams(res.data))
-            .catch(() => setTeams([]));
-    }, [leagueId]);
+            .catch(() => setTeams([]))
+            .finally(() => setTeamsLoading(false));
+    }, []);
 
     async function handleTeamChange(e) {
         const teamId = e.target.value;
@@ -19,29 +22,50 @@ const PlayerSearch = ({ leagueId, onAdd }) => {
 
         if (!teamId) return;
 
-        const res = await api.get(`/api/player/available/${leagueId}`, { params: { teamId } });
-        setPlayers(res.data);
+        setPlayersLoading(true);
+        try {
+            const res = await api.get(`/api/player/nba-roster/${teamId}`, { params: { leagueId } });
+            setPlayers(res.data);
+        } catch {
+            setPlayers([]);
+        } finally {
+            setPlayersLoading(false);
+        }
     }
 
     return (
         <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-                <h3 className="card-title">Add Player</h3>
+                <h3 className="card-title">Draft a Player</h3>
 
-                <select
-                    className="select select-bordered w-full"
-                    value={selectedTeamId}
-                    onChange={handleTeamChange}
-                >
-                    <option value="">Select a team...</option>
-                    {teams.map(t => (
-                        <option key={t.teamId} value={t.teamId}>
-                            {t.fullName} ({t.abbreviation})
-                        </option>
-                    ))}
-                </select>
+                {teamsLoading ? (
+                    <div className="flex justify-center py-4">
+                        <span className="loading loading-spinner text-primary" />
+                    </div>
+                ) : teams.length === 0 ? (
+                    <p className="text-sm text-error">Could not load NBA teams. Please try refreshing.</p>
+                ) : (
+                    <select
+                        className="select select-bordered w-full"
+                        value={selectedTeamId}
+                        onChange={handleTeamChange}
+                    >
+                        <option value="">Select a team...</option>
+                        {teams.map(t => (
+                            <option key={t.teamId} value={t.teamId}>
+                                {t.fullName} ({t.abbreviation})
+                            </option>
+                        ))}
+                    </select>
+                )}
 
-                {players.length > 0 && (
+                {playersLoading && (
+                    <div className="flex justify-center py-4">
+                        <span className="loading loading-spinner text-primary" />
+                    </div>
+                )}
+
+                {!playersLoading && players.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="table table-zebra">
                             <thead>
@@ -64,9 +88,9 @@ const PlayerSearch = ({ leagueId, onAdd }) => {
                                                     await onAdd(player.playerId);
                                                     setPlayers(prev => prev.filter(p => p.playerId !== player.playerId));
                                                 }}
-                                                className="btn btn-sm btn-outline"
+                                                className="btn btn-sm btn-primary"
                                             >
-                                                Add
+                                                Draft
                                             </button>
                                         </td>
                                     </tr>
@@ -76,7 +100,7 @@ const PlayerSearch = ({ leagueId, onAdd }) => {
                     </div>
                 )}
 
-                {selectedTeamId && players.length === 0 && (
+                {!playersLoading && selectedTeamId && players.length === 0 && (
                     <p className="text-sm text-base-content/60">No available players for this team.</p>
                 )}
             </div>

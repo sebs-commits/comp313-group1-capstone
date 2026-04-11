@@ -11,4 +11,6 @@ public interface ILivePlayerDataService
     Task<ScoreboardDto?> GetTodaysScoreboardAsync();
     Task<List<InjuryReportDto>?> GetDailyInjuryReportAsync(string reportIdentifier);
     Task<BoxScoreDto?> GetLiveBoxScoreAsync(string gameId);
+    Task<List<TeamDto>> GetAllTeamsAsync();
+    Task<List<PlayerDto>> GetTeamRosterAsync(int teamId);
 }
