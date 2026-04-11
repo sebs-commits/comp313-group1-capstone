@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
     public DbSet<LeagueChat> LeagueChats { get; set; }
     public DbSet<LeagueChatMessage> LeagueChatMessages { get; set; }
     public DbSet<MessageReaction> MessageReactions { get; set; }
+    public DbSet<Trade> Trades { get; set; }
+    public DbSet<TradeItem> TradeItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,5 +111,42 @@ public class AppDbContext : DbContext
               .OnDelete(DeleteBehavior.Cascade);
              b.HasIndex(mr => new { mr.MessageId, mr.UserId, mr.Emoji }).IsUnique();
          });
+
+        modelBuilder.Entity<Trade>(b =>
+        {
+            b.HasKey(t => t.Id);
+            b.HasOne(t => t.InitiatingTeam)
+             .WithMany()
+             .HasForeignKey(t => t.InitiatingTeamId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(t => t.ReceivingTeam)
+             .WithMany()
+             .HasForeignKey(t => t.ReceivingTeamId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(t => t.League)
+             .WithMany()
+             .HasForeignKey(t => t.LeagueId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(t => t.LeagueId);
+            b.HasIndex(t => new { t.InitiatingTeamId, t.Status });
+            b.HasIndex(t => new { t.ReceivingTeamId, t.Status });
+        });
+
+        modelBuilder.Entity<TradeItem>(b =>
+        {
+            b.HasKey(ti => ti.Id);
+            b.HasOne(ti => ti.Trade)
+             .WithMany(t => t.Items)
+             .HasForeignKey(ti => ti.TradeId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(ti => ti.OfferingTeam)
+             .WithMany()
+             .HasForeignKey(ti => ti.OfferingTeamId)
+             .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne(ti => ti.Player)
+             .WithMany()
+             .HasForeignKey(ti => ti.PlayerId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }

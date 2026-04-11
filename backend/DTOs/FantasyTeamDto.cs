@@ -61,3 +61,13 @@ public class LeaderboardEntryDto
     public decimal TotalPoints { get; set; }
     public int Rank { get; set; }
 }
+
+public class LeagueTeamSummaryDto
+{
+    public int Id { get; set; }
+    public int LeagueId { get; set; }
+    public Guid UserId { get; set; }
+    public string TeamName { get; set; } = string.Empty;
+    public string? ManagerName { get; set; }
+    public int RosterCount { get; set; }
+}

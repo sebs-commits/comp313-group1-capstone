@@ -20,6 +20,78 @@ public class FantasyTeamController : ControllerBase
         _scoring = scoring;
     }
 
+    // GET api/fantasy-team?userId={guid}
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<FantasyTeamResponseDto>>> GetTeams([FromQuery] Guid? userId = null)
+    {
+        var query = _context.FantasyTeams
+            .Include(ft => ft.Roster)
+                .ThenInclude(fr => fr.Player)
+                    .ThenInclude(p => p!.Team)
+            .AsQueryable();
+
+        if (userId.HasValue && userId.Value != Guid.Empty)
+        {
+            query = query.Where(ft => ft.UserId == userId.Value);
+        }
+
+        var teams = await query
+            .OrderBy(ft => ft.LeagueId)
+            .ThenBy(ft => ft.TeamName)
+            .Select(team => new FantasyTeamResponseDto
+            {
+                Id = team.Id,
+                LeagueId = team.LeagueId,
+                UserId = team.UserId,
+                TeamName = team.TeamName,
+                CreatedAt = team.CreatedAt,
+                Roster = team.Roster.Select(fr => new RosterPlayerDto
+                {
+                    PlayerId = fr.PlayerId,
+                    FullName = fr.Player != null ? fr.Player.FullName : null,
+                    Position = fr.Player != null ? fr.Player.Position : null,
+                    TeamAbbreviation = fr.Player != null && fr.Player.Team != null ? fr.Player.Team.Abbreviation : null,
+                    AddedAt = fr.AddedAt
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return Ok(teams);
+    }
+
+    // GET api/fantasy-team/league/{leagueId}/teams
+    [HttpGet("league/{leagueId:int}/teams")]
+    public async Task<ActionResult<IEnumerable<LeagueTeamSummaryDto>>> GetLeagueTeams(int leagueId)
+    {
+        var teams = await _context.FantasyTeams
+            .Where(ft => ft.LeagueId == leagueId)
+            .GroupJoin(
+                _context.Profiles,
+                ft => ft.UserId,
+                p => p.Id,
+                (ft, profiles) => new { Team = ft, Profile = profiles.FirstOrDefault() }
+            )
+            .Select(x => new LeagueTeamSummaryDto
+            {
+                Id = x.Team.Id,
+                LeagueId = x.Team.LeagueId,
+                UserId = x.Team.UserId,
+                TeamName = x.Team.TeamName,
+                ManagerName = x.Profile != null
+                    ? (!string.IsNullOrWhiteSpace(x.Profile.Username)
+                        ? x.Profile.Username
+                        : (!string.IsNullOrWhiteSpace(x.Profile.FirstName) || !string.IsNullOrWhiteSpace(x.Profile.LastName)
+                            ? ($"{x.Profile.FirstName} {x.Profile.LastName}").Trim()
+                            : null))
+                    : null,
+                RosterCount = _context.FantasyRosters.Count(fr => fr.FantasyTeamId == x.Team.Id)
+            })
+            .OrderBy(t => t.TeamName)
+            .ToListAsync();
+
+        return Ok(teams);
+    }
+
     // POST api/fantasy-team
     [HttpPost]
     public async Task<ActionResult<FantasyTeamResponseDto>> CreateTeam(CreateFantasyTeamDto dto)
