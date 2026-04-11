@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260411002324_AddTradeFeature")]
+    partial class AddTradeFeature
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,106 +24,6 @@ namespace backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("backend.Models.DraftOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DraftSessionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FantasyTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PickPosition")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DraftSessionId");
-
-                    b.HasIndex("FantasyTeamId");
-
-                    b.ToTable("draft_orders");
-                });
-
-            modelBuilder.Entity("backend.Models.DraftPick", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DraftSessionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FantasyTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PickNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PickedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("PlayerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Round")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DraftSessionId");
-
-                    b.HasIndex("FantasyTeamId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.ToTable("draft_picks");
-                });
-
-            modelBuilder.Entity("backend.Models.DraftSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentPick")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LeagueId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TotalPicks")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeagueId");
-
-                    b.ToTable("draft_sessions");
-                });
 
             modelBuilder.Entity("backend.Models.FantasyRoster", b =>
                 {
@@ -730,63 +633,6 @@ namespace backend.Migrations
                     b.ToTable("warnings");
                 });
 
-            modelBuilder.Entity("backend.Models.DraftOrder", b =>
-                {
-                    b.HasOne("backend.Models.DraftSession", "DraftSession")
-                        .WithMany("DraftOrder")
-                        .HasForeignKey("DraftSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.FantasyTeam", "FantasyTeam")
-                        .WithMany()
-                        .HasForeignKey("FantasyTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DraftSession");
-
-                    b.Navigation("FantasyTeam");
-                });
-
-            modelBuilder.Entity("backend.Models.DraftPick", b =>
-                {
-                    b.HasOne("backend.Models.DraftSession", "DraftSession")
-                        .WithMany("Picks")
-                        .HasForeignKey("DraftSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.FantasyTeam", "FantasyTeam")
-                        .WithMany()
-                        .HasForeignKey("FantasyTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.NbaPlayer", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("DraftSession");
-
-                    b.Navigation("FantasyTeam");
-
-                    b.Navigation("Player");
-                });
-
-            modelBuilder.Entity("backend.Models.DraftSession", b =>
-                {
-                    b.HasOne("backend.Models.NbaLeague", "League")
-                        .WithMany()
-                        .HasForeignKey("LeagueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("League");
-                });
-
             modelBuilder.Entity("backend.Models.FantasyRoster", b =>
                 {
                     b.HasOne("backend.Models.FantasyTeam", "FantasyTeam")
@@ -973,13 +819,6 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.DraftSession", b =>
-                {
-                    b.Navigation("DraftOrder");
-
-                    b.Navigation("Picks");
                 });
 
             modelBuilder.Entity("backend.Models.FantasyTeam", b =>

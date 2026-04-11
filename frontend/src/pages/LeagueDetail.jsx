@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ArrowRightLeft } from 'lucide-react';
 import useLeagueDetail from '../hooks/useLeagueDetail';
 import Layout from '../components/Layout';
 import LeagueInfo from '../components/LeagueInfo';
@@ -30,6 +31,18 @@ const LeagueDetail = () => {
     return (
         <Layout>
             <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold">{league.name}</h1>
+                    </div>
+                    <Link
+                        to="/trades"
+                        className="btn btn-primary gap-2"
+                    >
+                        <ArrowRightLeft size={18} />
+                        Manage Trades
+                    </Link>
+                </div>
 
                 <div className="flex justify-end">
                     <Link to={`/userLeagues/${id}/draft`} className="btn btn-primary btn-sm gap-2">

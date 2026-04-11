@@ -24,9 +24,12 @@ public class Program
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
                 builder.Configuration.GetConnectionString("DefaultConnection"),
-                npgsql => npgsql.CommandTimeout(300)
-            ));
-
+                npgsqlOptions =>
+                {
+                    // Supabase poolers can be slow to acknowledge DDL statements.
+                    npgsqlOptions.CommandTimeout(180);
+                    npgsqlOptions.EnableRetryOnFailure(5);
+                }));
 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
