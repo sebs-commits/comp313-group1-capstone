@@ -15,17 +15,15 @@ import LivePlayerStats from './pages/LivePlayerStats';
 import LeagueChats from './pages/LeagueChats';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import TradesPage from './pages/TradesPage';
 
 function AppRoutes() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Check if there are recovery tokens in the URL hash
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
-        
         if (accessToken) {
-            // Redirect to reset password page to handle recovery
             navigate('/auth/callback');
         }
     }, [navigate]);
@@ -47,6 +45,7 @@ function AppRoutes() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/league-chats" element={<LeagueChats />} />
             <Route path="/notifications" element={<NotificationsDashboard />} />
+            <Route path="/trades" element={<TradesPage />} />
         </Routes>
     );
 }
