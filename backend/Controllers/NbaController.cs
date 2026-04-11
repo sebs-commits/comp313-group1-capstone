@@ -150,5 +150,18 @@ namespace backend.Controllers
 
             return stat is null ? NotFound() : Ok(stat);
         }
+
+        [HttpGet("boxscore/{gameId}")]
+        public async Task<IActionResult> GetBoxScore(string gameId)
+        {
+            var data = await _nbaService.GetLiveBoxScoreAsync(gameId);
+
+            if (data == null)
+            {
+                return NotFound($"Box score for game {gameId} not found.");
+            }
+
+            return Ok(data);
+        }
     }
 }

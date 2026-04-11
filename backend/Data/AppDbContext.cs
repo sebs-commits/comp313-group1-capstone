@@ -22,6 +22,9 @@ public class AppDbContext : DbContext
     public DbSet<DraftSession> DraftSessions { get; set; }
     public DbSet<DraftOrder> DraftOrders { get; set; }
     public DbSet<DraftPick> DraftPicks { get; set; }
+    public DbSet<LeagueChat> LeagueChats { get; set; }
+    public DbSet<LeagueChatMessage> LeagueChatMessages { get; set; }
+    public DbSet<MessageReaction> MessageReactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,5 +122,34 @@ public class AppDbContext : DbContext
              .HasForeignKey(p => p.PlayerId)
              .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<LeagueChat>(b =>
+        {
+            b.HasKey(lc => lc.Id);
+            b.HasOne(lc => lc.League)
+             .WithMany()
+             .HasForeignKey(lc => lc.LeagueId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(lc => lc.LeagueId).IsUnique();
+        });
+
+        modelBuilder.Entity<LeagueChatMessage>(b =>
+        {
+            b.HasKey(lcm => lcm.Id);
+            b.HasOne(lcm => lcm.LeagueChat)
+             .WithMany(lc => lc.Messages)
+             .HasForeignKey(lcm => lcm.LeagueChatId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MessageReaction>(b =>
+         {
+             b.HasKey(mr => mr.Id);
+             b.HasOne(mr => mr.Message)
+              .WithMany(lcm => lcm.Reactions)
+              .HasForeignKey(mr => mr.MessageId)
+              .OnDelete(DeleteBehavior.Cascade);
+             b.HasIndex(mr => new { mr.MessageId, mr.UserId, mr.Emoji }).IsUnique();
+         });
     }
 }

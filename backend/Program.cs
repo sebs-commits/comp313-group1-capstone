@@ -1,28 +1,33 @@
-
 using backend.Data;
 using backend.Hubs;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
 using backend.Services;
+using backend.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Net.WebSockets;
+using System.IdentityModel.Tokens.Jwt;
+
 
 namespace backend;
 
 public class Program
 {
-    public static void Main(string[] args)
+
+        public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        // This will grab connection string found in appsettings.Development.json (Manually create this so connection string does not get pushed to repo)
+
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
                 builder.Configuration.GetConnectionString("DefaultConnection"),
                 npgsql => npgsql.CommandTimeout(300)
             ));
-        
+
+
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -40,9 +45,9 @@ public class Program
                 };
             });
 
-        // Add services to the container.
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+
         builder.Services.AddSwaggerGen(options =>
         {
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -68,8 +73,12 @@ public class Program
                 }
             });
         });
+
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
+        builder.Services.AddScoped<ILeagueChatService, LeagueChatService>();
+        builder.Services.AddSingleton<IEmailService, EmailService>();
+        builder.Services.AddHostedService<InjuryUpdateWorker>();
 
         builder.Services.AddHttpClient<ILivePlayerDataService, LivePlayerDataService>(client =>
         {
@@ -81,30 +90,100 @@ public class Program
 
         builder.Services.AddSignalR();
 
-        builder.Services.AddCors(options => {
-            options.AddPolicy("FrontendPolicy", policy => {
-                policy.WithOrigins("http://localhost:5173", "http://localhost:80", "http://localhost", "https://frontend.randomprojects.app", "http://127.0.0.1:5173")
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("CombinedPolicy", policy =>
+            {
+                policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:5174",
+                        "http://localhost:80",
+                        "http://localhost",
+                        "https://frontend.randomprojects.app",
+                        "http://127.0.0.1:5173")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();
             });
         });
-
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection();
-        app.UseCors("FrontendPolicy");
+        app.UseCors("CombinedPolicy");
+        
+        // Enable WebSocket support
+        var webSocketOptions = new WebSocketOptions
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(2)
+        };
+        app.UseWebSockets(webSocketOptions);
+
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // WebSocket middleware for league chat
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Path.StartsWithSegments("/ws/league-chat"))
+            {
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    var leagueIdStr = context.Request.Query["leagueId"].ToString();
+                    var tokenStr = context.Request.Query["token"].ToString();
+
+                    // Extract userId from JWT token if provided
+                    var userIdStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    
+                    if (string.IsNullOrEmpty(userIdStr) && !string.IsNullOrEmpty(tokenStr))
+                    {
+                        try
+                        {
+                            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                            var jwtToken = tokenHandler.ReadToken(tokenStr) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+                            if (jwtToken != null)
+                            {
+                                userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(leagueIdStr) && int.TryParse(leagueIdStr, out var leagueId) &&
+                        !string.IsNullOrEmpty(userIdStr) && Guid.TryParse(userIdStr, out var userId))
+                    {
+                        using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
+                        {
+                            await LeagueChatWebSocketHandler.HandleWebSocketAsync(webSocket, leagueId, userId, context.RequestServices);
+                        }
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync("Invalid leagueId or userId");
+                    }
+                }
+                else
+                {
+                    context.Response.StatusCode = 400;
+                    await context.Response.WriteAsync("Expected WebSocket request");
+                }
+            }
+            else
+            {
+                await next(context);
+            }
+        });
+
         app.MapControllers();
         app.MapHub<DraftHub>("/hubs/draft");
         app.Run();
     }
-}
+    }
+
