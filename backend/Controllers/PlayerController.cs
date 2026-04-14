@@ -168,11 +168,19 @@ public class PlayerController : ControllerBase
     }
 
     // Returns the IDs of all NBA teams that have at least one game in the league's scoring window.
+    // Tries the NBA CDN schedule first (covers regular season + playoffs); falls back to the DB.
     private async Task<List<int>> GetTeamIdsInWindow(NbaLeague league)
     {
+        var start = league.WeekStartDate!.Value;
+        var end   = league.WeekEndDate!.Value;
+
+        var liveIds = await _nba.GetTeamIdsWithGamesInWindowAsync(start, end);
+        if (liveIds.Count > 0)
+            return liveIds;
+
+        // Fallback: query the local DB (may be missing playoff games)
         var gamesInWindow = await _context.NbaGames
-            .Where(g => g.GameDate >= league.WeekStartDate!.Value
-                     && g.GameDate <= league.WeekEndDate!.Value)
+            .Where(g => g.GameDate >= start && g.GameDate <= end)
             .Select(g => new { g.HomeTeamId, g.AwayTeamId })
             .ToListAsync();
 

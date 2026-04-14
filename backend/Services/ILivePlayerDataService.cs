@@ -13,4 +13,6 @@ public interface ILivePlayerDataService
     Task<BoxScoreDto?> GetLiveBoxScoreAsync(string gameId);
     Task<List<TeamDto>> GetAllTeamsAsync();
     Task<List<PlayerDto>> GetTeamRosterAsync(int teamId);
+    Task<List<int>> GetTeamIdsWithGamesInWindowAsync(DateOnly start, DateOnly end);
+    Task<Dictionary<int, CdnPlayerStatsDto>> GetPlayerStatsForWindowAsync(DateOnly start, DateOnly end);
 }

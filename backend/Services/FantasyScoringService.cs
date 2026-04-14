@@ -8,13 +8,19 @@ namespace backend.Services;
 public class FantasyScoringService
 {
     private readonly AppDbContext _context;
+    private readonly ILivePlayerDataService _nba;
 
-    public FantasyScoringService(AppDbContext context)
+    public FantasyScoringService(AppDbContext context, ILivePlayerDataService nba)
     {
         _context = context;
+        _nba = nba;
     }
 
-    // Returns the full score breakdown for a team(used by the score endpoint in the FantasyTeamController)
+    // Public helper so controllers can pre-fetch window stats once and pass them to GetTeamTotalPoints
+    public Task<Dictionary<int, CdnPlayerStatsDto>> FetchWindowStatsAsync(DateOnly start, DateOnly end)
+        => _nba.GetPlayerStatsForWindowAsync(start, end);
+
+    // Returns the full score breakdown for a team (used by the score endpoint in the FantasyTeamController)
     public async Task<FantasyTeamScoreDto> GetTeamScore(FantasyTeam team, NbaLeague league)
     {
         var result = new FantasyTeamScoreDto
@@ -24,33 +30,55 @@ public class FantasyScoringService
         };
 
         if (league.WeekStartDate is null || league.WeekEndDate is null)
-        {
             return result;
-        }
+
+        var start = league.WeekStartDate.Value;
+        var end   = league.WeekEndDate.Value;
+
+        // Try CDN box scores first (covers 2025-26 regular season + playoffs)
+        var cdnStats = await _nba.GetPlayerStatsForWindowAsync(start, end);
 
         foreach (var rosterEntry in team.Roster)
         {
-            var stats = await GetStatsInWindow(
-                rosterEntry.PlayerId,
-                league.WeekStartDate.Value,
-                league.WeekEndDate.Value,
-                includePlayer: true
-            );
+            int points, rebounds, assists, steals, blocks, turnovers, threesMade;
+            string? playerName = null;
 
-            if (stats.Count == 0) continue;
+            if (cdnStats.TryGetValue(rosterEntry.PlayerId, out var cdn))
+            {
+                points     = cdn.Points;
+                rebounds   = cdn.Rebounds;
+                assists    = cdn.Assists;
+                steals     = cdn.Steals;
+                blocks     = cdn.Blocks;
+                turnovers  = cdn.Turnovers;
+                threesMade = cdn.ThreePointersMade;
+            }
+            else
+            {
+                // Fallback to DB
+                var dbStats = await GetStatsInWindow(rosterEntry.PlayerId, start, end, includePlayer: true);
+                if (dbStats.Count == 0) continue;
 
-            int points     = stats.Sum(s => s.Points ?? 0);
-            int rebounds   = stats.Sum(s => s.Rebounds ?? 0);
-            int assists    = stats.Sum(s => s.Assists ?? 0);
-            int steals     = stats.Sum(s => s.Steals ?? 0);
-            int blocks     = stats.Sum(s => s.Blocks ?? 0);
-            int turnovers  = stats.Sum(s => s.Turnovers ?? 0);
-            int threesMade = stats.Sum(s => s.Fg3Made ?? 0);
+                points     = dbStats.Sum(s => s.Points ?? 0);
+                rebounds   = dbStats.Sum(s => s.Rebounds ?? 0);
+                assists    = dbStats.Sum(s => s.Assists ?? 0);
+                steals     = dbStats.Sum(s => s.Steals ?? 0);
+                blocks     = dbStats.Sum(s => s.Blocks ?? 0);
+                turnovers  = dbStats.Sum(s => s.Turnovers ?? 0);
+                threesMade = dbStats.Sum(s => s.Fg3Made ?? 0);
+                playerName = dbStats.First().Player?.FullName;
+            }
+
+            if (playerName is null)
+            {
+                var player = await _context.NbaPlayers.FindAsync(rosterEntry.PlayerId);
+                playerName = player?.FullName;
+            }
 
             result.PlayerScores.Add(new PlayerScoreDto
             {
                 PlayerId      = rosterEntry.PlayerId,
-                PlayerName    = stats.First().Player?.FullName,
+                PlayerName    = playerName,
                 FantasyPoints = CalculateFantasyPoints(points, rebounds, assists, steals, blocks, turnovers, threesMade),
                 Points        = points,
                 Rebounds      = rebounds,
@@ -66,33 +94,39 @@ public class FantasyScoringService
         return result;
     }
 
-    // Returns just the total points for a team(used by the leaderboard ednpoint in the FantasyTeamController)
-    public async Task<decimal> GetTeamTotalPoints(FantasyTeam team, NbaLeague league)
+    // Returns just the total points for a team. Accepts pre-fetched CDN stats to avoid
+    // re-fetching box scores on every call when scoring multiple teams (like leaderboard).
+    public async Task<decimal> GetTeamTotalPoints(
+        FantasyTeam team,
+        NbaLeague league,
+        Dictionary<int, CdnPlayerStatsDto>? cdnStats = null)
     {
         if (league.WeekStartDate is null || league.WeekEndDate is null)
-        {
             return 0;
-        }
 
-        var rosterPlayerIds = team.Roster.Select(r => r.PlayerId).ToList();
+        var start = league.WeekStartDate.Value;
+        var end   = league.WeekEndDate.Value;
 
-        var stats = await GetStatsInWindowForPlayers(
-            rosterPlayerIds,
-            league.WeekStartDate.Value,
-            league.WeekEndDate.Value
-        );
+        // Use pre-fetched CDN stats if provided, otherwise fetch now
+        cdnStats ??= await _nba.GetPlayerStatsForWindowAsync(start, end);
 
-        decimal totalPoints = 0;
-
-        foreach (var s in stats)
+        if (cdnStats.Count > 0)
         {
-            totalPoints += CalculateFantasyPoints(
-                s.Points ?? 0, s.Rebounds ?? 0, s.Assists ?? 0,
-                s.Steals ?? 0, s.Blocks ?? 0, s.Turnovers ?? 0, s.Fg3Made ?? 0
-            );
+            var rosterIds = team.Roster.Select(r => r.PlayerId).ToHashSet();
+            return cdnStats.Values
+                .Where(s => rosterIds.Contains(s.PlayerId))
+                .Sum(s => CalculateFantasyPoints(
+                    s.Points, s.Rebounds, s.Assists,
+                    s.Steals, s.Blocks, s.Turnovers, s.ThreePointersMade));
         }
 
-        return totalPoints;
+        // Fallback to DB
+        var rosterPlayerIds = team.Roster.Select(r => r.PlayerId).ToList();
+        var dbStats = await GetStatsInWindowForPlayers(rosterPlayerIds, start, end);
+
+        return dbStats.Sum(s => CalculateFantasyPoints(
+            s.Points ?? 0, s.Rebounds ?? 0, s.Assists ?? 0,
+            s.Steals ?? 0, s.Blocks ?? 0, s.Turnovers ?? 0, s.Fg3Made ?? 0));
     }
 
 

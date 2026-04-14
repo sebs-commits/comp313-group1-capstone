@@ -16,3 +16,16 @@ public class TeamDto
     public string? FullName { get; set; }
     public string? Abbreviation { get; set; }
 }
+
+// Aggregated stats for a single player across one or more CDN box scores
+public class CdnPlayerStatsDto
+{
+    public int PlayerId { get; set; }
+    public int Points { get; set; }
+    public int Rebounds { get; set; }
+    public int Assists { get; set; }
+    public int Steals { get; set; }
+    public int Blocks { get; set; }
+    public int Turnovers { get; set; }
+    public int ThreePointersMade { get; set; }
+}

@@ -9,7 +9,7 @@ const PlayerSearch = ({ leagueId, onAdd }) => {
     const [playersLoading, setPlayersLoading] = useState(false);
 
     useEffect(() => {
-        api.get('/api/player/nba-teams')
+        api.get(`/api/player/teams/${leagueId}`)
             .then(res => setTeams(res.data))
             .catch(() => setTeams([]))
             .finally(() => setTeamsLoading(false));
