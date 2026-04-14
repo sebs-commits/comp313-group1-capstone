@@ -307,12 +307,17 @@ public class FantasyTeamController : ControllerBase
             .Where(ft => ft.LeagueId == leagueId)
             .ToListAsync();
 
+        // Fetch CDN stats once for the whole window, then reuse across all teams
+        var cdnStats = league.WeekStartDate is not null && league.WeekEndDate is not null
+            ? await _scoring.FetchWindowStatsAsync(league.WeekStartDate.Value, league.WeekEndDate.Value)
+            : new Dictionary<int, backend.DTOs.CdnPlayerStatsDto>();
+
         // Score each team and build the leaderboard entries
         var leaderboard = new List<LeaderboardEntryDto>();
 
         foreach (var team in teams)
         {
-            var totalPoints = await _scoring.GetTeamTotalPoints(team, league);
+            var totalPoints = await _scoring.GetTeamTotalPoints(team, league, cdnStats);
 
             leaderboard.Add(new LeaderboardEntryDto
             {
