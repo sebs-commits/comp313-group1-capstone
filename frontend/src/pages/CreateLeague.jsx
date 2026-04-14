@@ -104,7 +104,7 @@ const CreateLeague = () => {
               )}
 
               <div className="flex w-full flex-col gap-2 mt-2">
-                <button className="btn btn-primary w-full" onClick={() => navigate(`/leagues/${created.id}`)}>
+                <button className="btn btn-primary w-full" onClick={() => navigate(`/userLeagues/${created.id}`)}>
                   Go to League <ArrowRight size={16} />
                 </button>
                 <button className="btn btn-ghost w-full" onClick={() => navigate('/dashboard')}>
