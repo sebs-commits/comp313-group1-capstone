@@ -77,6 +77,7 @@ public class Program
             });
         });
 
+        builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
         builder.Services.AddScoped<FantasyScoringService>();
         builder.Services.AddScoped<ILeagueChatService, LeagueChatService>();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 import Layout from '../components/Layout';
+import api from '../api';
 import { Bell, Info, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
 
 const NotificationsPage = () => {
@@ -14,13 +14,8 @@ const NotificationsPage = () => {
         const fetchNotifications = async () => {
             setLoading(true);
             try {
-                const response = await fetch('http://localhost:5050/api/Notification');
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Data from API:", data); 
-                    setNotifications(data);
-                }
+                const response = await api.get('/api/Notification');
+                setNotifications(response.data);
             } catch (error) {
                 console.error("Failed to fetch notifications:", error);
             } finally {
@@ -30,6 +25,34 @@ const NotificationsPage = () => {
 
         fetchNotifications();
     }, []);
+
+    const handleMarkRead = async (id) => {
+        try {
+            await api.patch(`/api/Notification/${id}/read`);
+            setNotifications(prev =>
+                prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+            );
+        } catch (error) {
+            console.error("Failed to mark notification as read:", error);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await api.delete(`/api/Notification/${id}`);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (error) {
+            console.error("Failed to delete notification:", error);
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        const unread = notifications.filter(n => !n.isRead && n.type === 'TRADE');
+        await Promise.all(unread.map(n => api.patch(`/api/Notification/${n.id}/read`).catch(() => {})));
+        setNotifications(prev =>
+            prev.map(n => (n.type === 'TRADE' ? { ...n, isRead: true } : n))
+        );
+    };
 
     const filteredNotifications = notifications.filter(n =>
         filter === 'ALL' ? true : n.type.toUpperCase() === filter
@@ -76,15 +99,13 @@ const NotificationsPage = () => {
                                 {filteredNotifications.map((n) => (
                                     <div key={n.id} className={`p-4 flex gap-4 items-start transition-colors hover:bg-base-200/50 ${!n.isRead ? 'bg-primary/5' : ''}`}>
 
-                                        <div className={`mt-1 p-2 rounded-lg ${n.type === 'INJURY' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
-                                            }`}>
+                                        <div className={`mt-1 p-2 rounded-lg ${n.type === 'INJURY' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'}`}>
                                             {n.type === 'INJURY' ? <AlertTriangle size={18} /> : <Info size={18} />}
                                         </div>
 
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
-                                                <span className={`text-xs font-bold tracking-wider ${n.type === 'INJURY' ? 'text-error' : 'text-info'
-                                                    }`}>
+                                                <span className={`text-xs font-bold tracking-wider ${n.type === 'INJURY' ? 'text-error' : 'text-info'}`}>
                                                     {n.type}
                                                 </span>
                                                 <span className="text-[10px] text-base-content/40 uppercase">
@@ -97,23 +118,35 @@ const NotificationsPage = () => {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {!n.isRead && (
-                                                <button className="btn btn-ghost btn-xs text-success tooltip" data-tip="Mark read">
+                                            {!n.isRead && n.type === 'TRADE' && (
+                                                <button
+                                                    className="btn btn-ghost btn-xs text-success tooltip"
+                                                    data-tip="Mark read"
+                                                    onClick={() => handleMarkRead(n.id)}
+                                                >
                                                     <CheckCircle size={16} />
                                                 </button>
                                             )}
-                                            <button className="btn btn-ghost btn-xs text-base-content/30 hover:text-error">
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {n.type === 'TRADE' && (
+                                                <button
+                                                    className="btn btn-ghost btn-xs text-base-content/30 hover:text-error"
+                                                    onClick={() => handleDelete(n.id)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-                    {filteredNotifications.length > 0 && (
+                    {filteredNotifications.some(n => !n.isRead && n.type === 'TRADE') && (
                         <div className="card-footer p-3 bg-base-200/30 text-center border-t border-base-content/5">
-                            <button className="btn btn-link btn-xs no-underline text-base-content/40 hover:text-primary">
+                            <button
+                                className="btn btn-link btn-xs no-underline text-base-content/40 hover:text-primary"
+                                onClick={handleMarkAllRead}
+                            >
                                 Mark all as read
                             </button>
                         </div>

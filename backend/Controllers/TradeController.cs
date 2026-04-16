@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
+using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,13 @@ public class TradeController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<TradeController> _logger;
+    private readonly INotificationService _notificationService;
 
-    public TradeController(AppDbContext context, ILogger<TradeController> logger)
+    public TradeController(AppDbContext context, ILogger<TradeController> logger, INotificationService notificationService)
     {
         _context = context;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     // Get current user's ID from JWT token
@@ -125,6 +128,13 @@ public class TradeController : ControllerBase
 
             _context.TradeItems.AddRange(tradeItems);
             await _context.SaveChangesAsync();
+
+            // Notify the receiving team owner
+            await _notificationService.CreateAsync(
+                receivingTeam.UserId,
+                "TRADE",
+                $"{initiatingTeam.TeamName} has proposed a trade with your team."
+            );
 
             return Ok(await GetTradeDto(trade.Id));
         }
