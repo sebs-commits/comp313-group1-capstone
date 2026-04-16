@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<MessageReaction> MessageReactions { get; set; }
     public DbSet<Trade> Trades { get; set; }
     public DbSet<TradeItem> TradeItems { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -172,6 +173,12 @@ public class AppDbContext : DbContext
             b.HasIndex(t => t.LeagueId);
             b.HasIndex(t => new { t.InitiatingTeamId, t.Status });
             b.HasIndex(t => new { t.ReceivingTeamId, t.Status });
+        });
+
+        modelBuilder.Entity<Notification>(b =>
+        {
+            b.HasKey(n => n.Id);
+            b.HasIndex(n => n.UserId);
         });
 
         modelBuilder.Entity<TradeItem>(b =>
