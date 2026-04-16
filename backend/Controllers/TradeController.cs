@@ -46,23 +46,19 @@ public class TradeController : ControllerBase
         {
             var userId = GetCurrentUserId();
 
-            // Get the initiating team (current user's team)
-            var initiatingTeam = await _context.FantasyTeams
-                .FirstOrDefaultAsync(ft => ft.UserId == userId);
-
-            if (initiatingTeam == null)
-                return BadRequest("You don't have a fantasy team in this league");
-
-            // Get the receiving team
+            // Get the receiving team first to know which league we're in
             var receivingTeam = await _context.FantasyTeams
                 .FirstOrDefaultAsync(ft => ft.Id == request.ReceivingTeamId);
 
             if (receivingTeam == null)
                 return BadRequest("Receiving team not found");
 
-            // Verify both teams are in the same league
-            if (initiatingTeam.LeagueId != receivingTeam.LeagueId)
-                return BadRequest("Teams must be in the same league");
+            // Get the initiating team scoped to the same league as the receiving team
+            var initiatingTeam = await _context.FantasyTeams
+                .FirstOrDefaultAsync(ft => ft.UserId == userId && ft.LeagueId == receivingTeam.LeagueId);
+
+            if (initiatingTeam == null)
+                return BadRequest("You don't have a fantasy team in this league");
 
             // Verify initiating and receiving teams are different
             if (initiatingTeam.Id == receivingTeam.Id)
