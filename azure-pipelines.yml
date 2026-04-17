@@ -32,6 +32,7 @@ stages:
 
     - task: SonarQubePrepare@7
       displayName: 'SonarQube - Prepare Analysis'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
       inputs:
         SonarQube: 'SonarQube'
         scannerMode: 'dotnet'
@@ -51,9 +52,11 @@ stages:
 
     - task: SonarQubeAnalyze@7
       displayName: 'SonarQube - Run Analysis'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
 
     - task: SonarQubePublish@7
       displayName: 'SonarQube - Publish Results'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
       inputs:
         pollingTimeoutSec: '300'
 
