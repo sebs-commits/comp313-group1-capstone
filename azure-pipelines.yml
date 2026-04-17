@@ -30,17 +30,6 @@ stages:
         packageType: 'sdk'
         version: $(dotnetVersion)
 
-    - task: SonarQubePrepare@7
-      displayName: 'SonarQube - Prepare Analysis'
-      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-      inputs:
-        SonarQube: 'SonarQube'
-        scannerMode: 'dotnet'
-        projectKey: 'NBAFL'
-        projectName: 'NBAFL'
-        extraProperties: |
-          sonar.branch.name=
-
     - script: |
         dotnet restore backend/backend.sln
         dotnet build backend/backend.sln \
@@ -52,15 +41,18 @@ stages:
         echo "Test stage - no runnable tests in this project, theres a test folder, but for the sake of keeping things simple - TEST PASSED!"
       displayName: 'Run unit tests and collect coverage'
 
-    - task: SonarQubeAnalyze@7
-      displayName: 'SonarQube - Run Analysis'
+    - script: |
+        export PATH="$PATH:/home/debian/.dotnet/tools"
+        dotnet tool install --global dotnet-sonarscanner --ignore-failed-sources || true
+        dotnet sonarscanner begin \
+          /k:"NBAFL" \
+          /n:"NBAFL" \
+          /d:sonar.host.url="$(sonarHostUrl)" \
+          /d:sonar.token="$(sonarToken)"
+        dotnet build backend/backend.sln --configuration $(buildConfiguration) --no-restore
+        dotnet sonarscanner end /d:sonar.token="$(sonarToken)"
+      displayName: 'SonarQube Analysis'
       condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-
-    - task: SonarQubePublish@7
-      displayName: 'SonarQube - Publish Results'
-      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-      inputs:
-        pollingTimeoutSec: '300'
 
 # CD STAGES
 - stage: Deliver
