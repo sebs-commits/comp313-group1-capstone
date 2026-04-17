@@ -38,6 +38,8 @@ stages:
         scannerMode: 'dotnet'
         projectKey: 'NBAFL'
         projectName: 'NBAFL'
+        extraProperties: |
+          sonar.branch.name=
 
     - script: |
         dotnet restore backend/backend.sln
