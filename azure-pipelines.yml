@@ -39,8 +39,8 @@ stages:
         projectName: 'NBAFL'
 
     - script: |
-        dotnet restore backend/NBAFL.sln
-        dotnet build backend/NBAFL.sln \
+        dotnet restore backend/backend.sln
+        dotnet build backend/backend.sln \
           --configuration $(buildConfiguration) \
           --no-restore
       displayName: 'Compile .NET project'
